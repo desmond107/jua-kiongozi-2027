@@ -16,6 +16,7 @@ candidate, and view fully public real-time results.
 
 - [Quick start](#quick-start)
 - [Environment variables](#environment-variables)
+- [Deploying to Vercel](#deploying-to-vercel)
 - [Architecture](#architecture)
 - [Security model](#security-model)
 - [Design system](#design-system)
@@ -59,7 +60,7 @@ createdb jua_kiongozi_2027
 | Script | Does |
 |---|---|
 | `npm run dev` | Development server |
-| `npm run build` | `prisma generate` + production build |
+| `npm run build` | `prisma generate` + `migrate deploy` + seed + production build |
 | `npm run start` | Serve the production build |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` |
@@ -104,6 +105,50 @@ bucket, too low lumps everyone behind the proxy into one.
 **Treat the two hash secrets as permanent.** They are not encryption keys that can be rotated —
 rotating either makes existing hashes unmatchable, which means nobody can log in and no token can be
 verified. Back them up somewhere durable before going live.
+
+---
+
+## Deploying to Vercel
+
+`.env` is gitignored, so **nothing in it reaches Vercel**. Every variable in the table above must be
+re-entered under Project → Settings → Environment Variables, for the Production environment. A
+missing secret throws at first use, and a page that queries the database throws on render — both
+surface as the generic "Something went wrong" boundary with a `Reference:` digest.
+
+**1. Use a hosted Postgres, with the pooled connection string.** Serverless functions open a
+connection per invocation and will exhaust a direct Postgres connection limit under any real
+traffic. Neon and Supabase both expose a separate pooled host — use that one, and append
+`?pgbouncer=true&connection_limit=1` for Prisma.
+
+**2. Leave `TRUSTED_PROXY_HOPS` unset.** Vercel supplies a trustworthy client IP directly. Setting a
+hop count here would read the wrong end of a header Vercel already normalised.
+
+**3. `SMS_PROVIDER` is required.** Without it, `/api/auth/request-otp` returns 503 and nobody can
+register — the app refuses to hand out accounts it cannot gate. The rest of the site still works.
+
+### The build applies migrations and seeds
+
+```
+prisma generate && prisma migrate deploy && prisma db seed && next build
+```
+
+`migrate deploy` is what creates the tables. Without it a correctly configured `DATABASE_URL` still
+yields a schema-less database, and every page that reads it throws. It never generates new
+migrations and never drops data, so it is safe to run on every deploy. The seed upserts the seven
+candidates and touches nothing else, so it will not disturb accumulated votes.
+
+Two consequences worth knowing:
+
+- **The build now fails loudly if `DATABASE_URL` is missing or unreachable**, rather than succeeding
+  and producing a deployment that errors on every request. That is the intended trade.
+- **The seed runs `tsx`, a devDependency.** Vercel installs devDependencies at build time by
+  default. If you switch to a production-only install, move the seed to a separate one-off step.
+
+### Reading an error reference
+
+The `Reference:` string on the error page is Next.js's `error.digest`. The same digest is printed in
+Vercel → your deployment → **Runtime Logs**, next to the real stack trace, which the browser
+deliberately never receives. Search the logs for that number to get the actual exception.
 
 ---
 
