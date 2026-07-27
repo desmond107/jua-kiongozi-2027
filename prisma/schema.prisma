@@ -1,0 +1,209 @@
+// Jua Kiongozi '27 — data model
+//
+// Privacy posture baked into this schema:
+//   * Raw national ID numbers are NEVER stored. Only `idNumberHash` (HMAC-SHA256
+//     with a server-side pepper) is persisted, and it exists solely to block
+//     duplicate registration.
+//   * Raw voting tokens are NEVER stored. Only `tokenHash` is persisted. The raw
+//     token is shown to the citizen exactly once, on the Voter Card screen.
+//   * Votes and flags are linked to a user id so that "one rating per candidate"
+//     can be enforced, but nothing in the public analytics layer ever reads a
+//     user-identifying column.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  // Hashed at rest. Registration and login look users up by this hash, never by
+  // the raw phone number the citizen typed.
+  phoneHash    String   @unique
+  // Last 3 digits only, e.g. "***456" — enough for the citizen to recognise
+  // their own account on the Voter Card without being re-identifying on its own.
+  phoneMasked  String
+  idNumberHash String   @unique
+  idMasked     String
+  // Self-declared at registration, where it is REQUIRED — see
+  // backend/validators/auth.validator.ts. The column stays nullable so accounts
+  // created before county became mandatory still load; a NOT NULL migration
+  // would fail against those rows, and there is no honest way to backfill a
+  // person's county. Powers the "participation by region" analytics.
+  county       String?
+  createdAt    DateTime @default(now())
+
+  tokens VotingToken[]
+  votes  Vote[]
+  flags  Flag[]
+
+  @@index([county])
+  @@map("users")
+}
+
+/// A citizen's single voting credential. One row per user — it is issued once at
+/// registration and can never be reissued (see token.service.ts).
+///
+/// "Single use" is enforced *per candidate*: the credential authorises exactly
+/// one vote + flag for each candidate, and can never be replayed against a
+/// candidate it has already been spent on. Each spend is recorded in TokenUsage.
+model VotingToken {
+  id          String    @id @default(cuid())
+  tokenHash   String    @unique
+  // AES-256-GCM ciphertext of the raw token, so its owner can retrieve it after
+  // registration (see token.service.ts → revealToken). Null for tokens issued
+  // before this column existed, and for any row whose key has been rotated —
+  // those remain permanently unrecoverable, which is the older, stricter
+  // behaviour rather than an error.
+  tokenCipher String?
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Timestamp of the FIRST time this credential was spent. Null = never used.
+  usedAt      DateTime?
+  // Set only if the deployment is configured to scope a credential to a single
+  // candidate. Null under the default per-user scoping.
+  candidateId String?
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  usages TokenUsage[]
+
+  @@index([userId])
+  @@map("voting_tokens")
+}
+
+/// Immutable ledger of every candidate a credential has been spent on. The
+/// unique constraint is the hard, database-level guarantee that a token can
+/// never be replayed against the same candidate twice.
+model TokenUsage {
+  id          String      @id @default(cuid())
+  tokenId     String
+  token       VotingToken @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+  candidateId String
+  candidate   Candidate   @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  createdAt   DateTime    @default(now())
+
+  @@unique([tokenId, candidateId])
+  @@index([candidateId])
+  @@map("token_usages")
+}
+
+model Candidate {
+  id         String   @id @default(cuid())
+  slug       String   @unique
+  fullName   String
+  party      String?
+  role       String
+  bio        String
+  photoUrl   String?
+  // Controls display order on the candidates grid. Kept explicit so ordering is
+  // never an accident of insertion order or alphabetisation.
+  orderIndex Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  votes       Vote[]
+  flags       Flag[]
+  tokenUsages TokenUsage[]
+
+  @@map("candidates")
+}
+
+model Vote {
+  id          String     @id @default(cuid())
+  choice      VoteChoice
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  candidateId String
+  candidate   Candidate  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  // Denormalised from User at write time so region analytics never has to join
+  // back to the users table (which keeps the analytics query path away from
+  // identity columns entirely).
+  county      String?
+  createdAt   DateTime   @default(now())
+
+  @@unique([userId, candidateId])
+  @@index([candidateId])
+  @@index([candidateId, choice])
+  @@map("votes")
+}
+
+model Flag {
+  id          String    @id @default(cuid())
+  color       FlagColor
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  county      String?
+  createdAt   DateTime  @default(now())
+
+  @@unique([userId, candidateId])
+  @@index([candidateId])
+  @@index([candidateId, color])
+  @@map("flags")
+}
+
+/// A one-time code proving control of a phone number, required before an
+/// account can be created.
+///
+/// This is what stops registration from being free: without it, any 7–9 digit
+/// string passes as a national ID and an attacker can mint unlimited voters.
+/// Possession of a real, chargeable SIM is the cost we impose instead. It is not
+/// proof of identity — nothing here can confirm the ID number belongs to the
+/// person typing it — but it makes bulk registration expensive rather than free.
+///
+/// The raw code is NEVER stored, on the same principle as voting tokens: only
+/// `codeHash` is persisted, so a database dump does not let an attacker complete
+/// a pending registration.
+model PhoneVerification {
+  id        String    @id @default(cuid())
+  // Same peppered hash as User.phoneHash, so a raw number is never written here
+  // either. Not unique: a citizen may legitimately request a second code.
+  phoneHash String
+  codeHash  String
+  // Wrong guesses against this challenge. Capped so a 6-digit code cannot be
+  // walked through in a few thousand requests.
+  attempts  Int       @default(0)
+  expiresAt DateTime
+  // Set the moment the code is accepted. A consumed challenge is dead: it can
+  // never authorise a second registration.
+  consumedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([phoneHash, createdAt])
+  @@index([expiresAt])
+  @@map("phone_verifications")
+}
+
+/// Persistent, fixed-window rate limiting. Backed by the database rather than
+/// process memory because the deployment target is serverless — an in-memory
+/// counter would reset on every cold start and be trivially bypassed by fanning
+/// requests across instances.
+model RateLimit {
+  id          String   @id @default(cuid())
+  // e.g. "register:ip:41.90.x.x" or "vote:phone:<hash>"
+  bucketKey   String   @unique
+  hits        Int      @default(0)
+  windowStart DateTime @default(now())
+
+  @@index([windowStart])
+  @@map("rate_limits")
+}
+
+enum VoteChoice {
+  YES
+  NO
+  NOT_SURE
+}
+
+enum FlagColor {
+  GREEN
+  ORANGE
+  RED
+  BLACK
+}

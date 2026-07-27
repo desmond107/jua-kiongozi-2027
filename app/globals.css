@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-ink-800 font-sans text-bone antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /*
+   * The ambient gradient mesh. Painted onto a fixed, promoted layer (see
+   * <AmbientMesh /> in the root layout) rather than as a
+   * `background-attachment: fixed` on <body> — that property forces a full
+   * repaint on every scroll frame on mid-range Android, which is precisely the
+   * hardware this platform targets.
+   */
+  .ambient-mesh {
+    @apply pointer-events-none fixed inset-0 -z-10 bg-mesh-primary;
+    will-change: transform;
+  }
+
+  ::selection {
+    @apply bg-verdant/30 text-bone;
+  }
+
+  /* One consistent focus ring everywhere. Deliberately high-contrast: the
+     palette is dark and gradient-heavy, and a subtle ring would vanish against
+     the glow. */
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    @apply outline-none ring-2 ring-gold ring-offset-2 ring-offset-ink-900;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  /* Frosted panel that catches the gradient glow behind it. */
+  .glass {
+    @apply rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl;
+  }
+
+  .glass-strong {
+    @apply rounded-3xl border border-white/15 bg-ink-700/70 backdrop-blur-2xl;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-br from-bone via-gold-soft to-verdant-soft bg-clip-text text-transparent;
+  }
+
+  /* Gradient shimmer skeleton — the loading state for every data-fetching
+     component. Deliberately not a spinner: it preserves layout and matches the
+     aesthetic. */
+  .skeleton {
+    @apply relative overflow-hidden rounded-lg bg-white/[0.06];
+  }
+
+  .skeleton::after {
+    @apply absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent;
+    content: '';
+    animation: shimmer 2s infinite;
+  }
+
+  .hairline {
+    @apply h-px w-full bg-gradient-to-r from-transparent via-white/15 to-transparent;
+  }
+}
+
+@layer utilities {
+  /* Applied to tilting cards so children render on their own Z planes. */
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/*
+ * Accessibility: honour the OS-level reduced-motion preference globally.
+ *
+ * Components ALSO check `prefers-reduced-motion` in JS (frontend/hooks/
+ * useReducedMotion.ts) to skip mounting the WebGL scene entirely — this rule
+ * only neutralises CSS animation and cannot stop a render loop, so both layers
+ * are needed.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Recharts' SVG surface inherits the global focus ring; suppress it on the
+   non-interactive chart canvas only. */
+.recharts-wrapper:focus,
+.recharts-surface:focus {
+  outline: none;
+}
