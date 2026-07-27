@@ -1,6 +1,20 @@
 /**
  * Display formatting helpers. Pure functions, safe on both server and client.
+ *
+ * WHY EVERY DATE FORMATTER PINS A TIME ZONE
+ * ─────────────────────────────────────────
+ * These run during SSR *and* again during hydration. `Intl.DateTimeFormat`
+ * defaults to the host's zone, which is the server's on one pass and the
+ * browser's on the other — a production server on UTC and a citizen in Nairobi
+ * (UTC+3) disagree about which calendar day a late-evening timestamp falls on,
+ * so the two passes emit different text and React throws a hydration error.
+ *
+ * Pinning the zone makes the output a pure function of the ISO string. Nairobi
+ * is also the correct zone to display in: this is a Kenyan platform, and a
+ * registration timestamp means the day it happened in Kenya.
  */
+
+const TIME_ZONE = 'Africa/Nairobi'
 
 const numberFormatter = new Intl.NumberFormat('en-KE')
 
@@ -18,6 +32,7 @@ export function formatDate(iso: string): string {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
+    timeZone: TIME_ZONE,
   }).format(new Date(iso))
 }
 
@@ -28,6 +43,8 @@ export function formatDateTime(iso: string): string {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
+    hour12: false,
+    timeZone: TIME_ZONE,
   }).format(new Date(iso))
 }
 
