@@ -19,7 +19,7 @@ const TERMS = [
   },
   {
     title: 'Your voting token',
-    body: 'Your token is issued once and shown once. You are responsible for keeping it confidential. Anyone who obtains it can cast ratings in your name, and because we store only a hash of it, we cannot recover, reset or reissue it.',
+    body: 'Your token is issued once, at registration. You are responsible for keeping it confidential — anyone who obtains it can cast ratings in your name. While you remain signed in, you may retrieve it from your Voter Card page by verifying your registered phone number again. We will not reissue a token to anyone who cannot receive that verification code, and if you are signed out and no longer hold your token, we cannot restore access to your account.',
   },
   {
     title: 'One rating per candidate',

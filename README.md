@@ -22,6 +22,7 @@ candidate, and view fully public real-time results.
 - [Design system](#design-system)
 - [Accessibility](#accessibility)
 - [Common tasks](#common-tasks)
+- [Testing](#testing)
 - [Known limitations](#known-limitations)
 - [Before you launch](#before-you-launch)
 
@@ -381,6 +382,76 @@ silently disable route-level caching.
 
 Vote and flag submissions call `revalidateTag`, so new ratings appear immediately rather than waiting
 out the window.
+
+---
+
+## Testing
+
+```bash
+npm test              # everything
+npm run test:unit     # pure functions, no database, ~0.3s
+npm run test:integration
+npm run test:watch
+```
+
+### Setting up the test database
+
+The integration suite **truncates tables between tests**, so it must never point at a database
+holding real registrations. `tests/setup.ts` refuses to run against a `DATABASE_URL` that does not
+look disposable, but configure it deliberately anyway:
+
+```bash
+createdb jua_kiongozi_test
+cp .env.example .env.test          # then set DATABASE_URL to the test database
+DATABASE_URL="postgresql://…/jua_kiongozi_test" npx prisma migrate deploy
+```
+
+`.env.test` is gitignored and takes precedence over `.env` when running tests.
+
+### What is covered, and why
+
+The suite is deliberately weighted towards the platform's integrity invariants rather than towards
+line coverage. If the published numbers can be forged, nothing else about this codebase matters.
+
+| Area | Covers |
+|---|---|
+| `tests/unit/crypto` | Token entropy and unpredictability, hash determinism and domain separation, phone/ID normalisation, AES-GCM round-trip and tamper rejection, constant-time comparison |
+| `tests/unit/validators` | The schemas shared by the forms and the API, including that the flag ramp stays monotonically darkening so its ordering survives colour blindness |
+| `tests/integration/registration` | One account per phone and per national ID — including the same ID written differently — OTP consumption, transaction rollback, and that the ID is never named as the duplicate |
+| `tests/integration/voting` | One rating per citizen per candidate, token→account binding, revoked tokens, and the vote/flag endpoints used independently |
+| `tests/integration/analytics` | Aggregate arithmetic, county rollups, CSV formula-injection escaping, and that no public payload contains anything personal |
+| `tests/integration/token-reveal` | That retrieving a token always requires control of the registered phone, that codes are single-use, and that one citizen can never reveal another's token |
+
+**Concurrency is tested, not assumed.** Several invariants are enforced by database constraints
+rather than application code, because a check-then-write is correct right up until two requests
+interleave. Those paths are exercised with genuinely simultaneous requests:
+
+- 5 concurrent registrations of one identity with one valid code → exactly 1 account
+- 10 concurrent submissions of the same ballot → exactly 1 vote, 1 flag, 1 token usage
+- a vote and a flag racing for the same candidate → at most 1 token usage
+
+### HTTP smoke test
+
+The vitest suite drives the service layer. `scripts/smoke.sh` walks a citizen through the whole
+journey over real HTTP — route handlers, session cookies, the JSON envelope, rate limiting — using
+only curl:
+
+```bash
+npm run build && npm start          # in one shell
+BASE_URL=http://localhost:3000 ./scripts/smoke.sh
+```
+
+Against a production build the verification code is correctly withheld from the API response. With
+`SMS_PROVIDER=console` it is still written to the server log, so point the script at it:
+
+```bash
+SMOKE_SMS_LOG=/path/to/server.log ./scripts/smoke.sh
+```
+
+### CI
+
+`.github/workflows/ci.yml` runs typecheck, lint and build in one job, and the full suite against a
+`postgres:16` service container in another, on every push and pull request.
 
 ---
 

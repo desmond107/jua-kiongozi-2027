@@ -17,7 +17,8 @@ import { cn } from '@/frontend/lib/utils'
  * ──────────────
  *  - The raw token lives in this component's props for the life of one page
  *    view. It is never written to localStorage, sessionStorage, a cookie or the
- *    URL, and the server cannot reissue it.
+ *    URL. It CAN be retrieved again later, but only from the Voter Card page by
+ *    an already-signed-in citizen who re-verifies their phone by SMS.
  *  - The token is masked by default. Revealing it is a deliberate act, which
  *    matters when registering on a shared or public machine.
  *  - The QR code encodes the *public serial and verify URL only* — never the
@@ -95,7 +96,8 @@ export function VoterCardDisplay({
       '',
       '-'.repeat(46),
       'Treat this token like a password. Anyone holding it can cast',
-      'ratings in your name. It is shown once and cannot be reissued.',
+      'ratings in your name. Keep this file somewhere private — if you lose it and',
+      'are signed out everywhere, you cannot get back into your account.',
       '',
       'Jua Kiongozi ’27 is an independent civic-engagement platform.',
       'It is not affiliated with, endorsed by, or a substitute for the',
@@ -201,11 +203,12 @@ export function VoterCardDisplay({
             <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-gold" aria-hidden />
             <div className="space-y-1">
               <p className="text-sm font-semibold text-bone">
-                Save this token now — it is shown only once
+                Save this token now
               </p>
               <p className="text-xs leading-relaxed text-bone-dim">
-                We store only a cryptographic hash of it, so we cannot show it to you again or
-                issue a replacement. Keep it as private as a password.
+                Keep it as private as a password — anyone holding it can rate candidates in your
+                name. You can retrieve it later from this page while you are signed in, by
+                verifying your phone again. If you sign out and lose it, you cannot get back in.
               </p>
             </div>
           </div>

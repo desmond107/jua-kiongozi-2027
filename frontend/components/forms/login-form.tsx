@@ -14,8 +14,8 @@ import { api, RequestError } from '@/frontend/lib/api'
  *
  * Signing in only lets a citizen check their voting status and continue rating
  * candidates. It never issues a new token, and the server never returns the
- * existing one — a lost token cannot be recovered through this form or any
- * other.
+ * existing one. A token can only be retrieved from the Voter Card page, by an
+ * already-signed-in citizen who re-verifies their phone.
  */
 export function LoginForm() {
   const router = useRouter()
@@ -109,9 +109,14 @@ export function LoginForm() {
 
       <div className="space-y-2 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
         <p className="text-xs leading-relaxed text-bone-dim">
-          <strong className="text-bone-muted">Lost your token?</strong> Tokens are stored only as a
-          cryptographic hash, so they cannot be recovered or reissued. This is deliberate: a token
-          that could be reissued on request could also be reissued to an impostor.
+          <strong className="text-bone-muted">Lost your token?</strong> If you are still signed in
+          on a device you used before, open your Voter Card there — you can retrieve the token by
+          verifying your phone number again.
+        </p>
+        <p className="text-xs leading-relaxed text-bone-dim">
+          If you are signed out everywhere and no longer have the token, you cannot currently get
+          back in. Signing in requires the token itself, so there is no route back into the account
+          without it. We would rather tell you that plainly than have you keep trying.
         </p>
       </div>
 

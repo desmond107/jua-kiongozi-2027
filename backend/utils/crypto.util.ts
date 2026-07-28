@@ -203,11 +203,26 @@ export function maskTail(value: string, visible = 3): string {
 }
 
 /**
- * Constant-time hash comparison. Both inputs are hex digests of identical
- * length, so a length mismatch can only mean a malformed value.
+ * Constant-time hash comparison.
+ *
+ * Both inputs are expected to be hex digests of identical length, so a length
+ * mismatch can only mean a malformed value.
+ *
+ * The explicit hex validation matters more than it looks: `Buffer.from(s,
+ * 'hex')` does not throw on invalid input, it silently decodes up to the first
+ * bad character. Two malformed values would therefore both decode to an EMPTY
+ * buffer and `timingSafeEqual` would report them equal. No current call site
+ * can reach that — every comparison has a freshly computed digest on at least
+ * one side — but "two unparseable strings are equal" is precisely the sort of
+ * latent edge that becomes a vulnerability the first time someone compares two
+ * values that both came from the database.
  */
+const HEX_DIGEST = /^[0-9a-fA-F]*$/
+
 export function hashesMatch(a: string, b: string): boolean {
   if (a.length !== b.length) return false
+  if (a.length % 2 !== 0) return false
+  if (!HEX_DIGEST.test(a) || !HEX_DIGEST.test(b)) return false
 
   try {
     return timingSafeEqual(Buffer.from(a, 'hex'), Buffer.from(b, 'hex'))

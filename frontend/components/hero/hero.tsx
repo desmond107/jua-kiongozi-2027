@@ -129,9 +129,16 @@ export function Hero({ registeredVoters, totalVotes }: HeroProps) {
                 {formatNumber(totalVotes)}
               </dd>
             </div>
+            {/*
+              Says "phone number", not "citizen". Registration verifies control
+              of a SIM by SMS; it does not verify that a national ID belongs to
+              the person typing it, and no data source available to this
+              platform can establish that. Claiming a verified *citizen* would
+              overstate what the system actually proves. See /how-it-works.
+            */}
             <div className="flex items-center gap-2 text-sm text-bone-dim">
               <ShieldCheck className="h-4 w-4 text-verdant" aria-hidden />
-              One verified voice per citizen
+              One voice per verified phone number
             </div>
           </motion.dl>
         </div>

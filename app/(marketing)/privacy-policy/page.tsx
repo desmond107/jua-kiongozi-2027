@@ -49,6 +49,11 @@ export default function PrivacyPolicyPage() {
               only for the aggregate participation-by-region breakdown.
             </li>
             <li>
+              <strong className="text-bone">Your voting token</strong> — stored encrypted rather
+              than hashed, so it can be shown to you again after you re-verify your phone. See{' '}
+              “How each secret is protected” below.
+            </li>
+            <li>
               <strong className="text-bone">Your votes and trust flags</strong> — linked to your
               account so that the one-rating-per-candidate rule can be enforced.
             </li>
@@ -57,13 +62,28 @@ export default function PrivacyPolicyPage() {
 
         <section className="space-y-4">
           <h2 className="font-display text-xl font-semibold text-bone">
-            What we never store in readable form
+            How each secret is protected
           </h2>
           <p className="text-base leading-relaxed text-bone-muted">
-            Your national ID number, your phone number, and your voting token are each put through a
-            keyed one-way hash before being written to the database. The plaintext values are not
-            retained anywhere, including in application logs. Someone who obtained a complete copy
-            of the database still could not read them.
+            <strong className="text-bone">Your national ID number and phone number</strong> are put
+            through a keyed one-way hash before being written to the database. The plaintext values
+            are not retained anywhere, including in application logs. Someone who obtained a
+            complete copy of the database could not read them, because reversing the hash is not
+            possible even for us.
+          </p>
+          <p className="text-base leading-relaxed text-bone-muted">
+            <strong className="text-bone">Your voting token</strong> is treated differently, and we
+            want to be precise about it rather than let you assume otherwise. Because you can ask us
+            to show you your token again — after proving control of your registered phone — it is
+            stored <em>encrypted</em>, not hashed. Encryption is reversible; hashing is not.
+          </p>
+          <p className="text-base leading-relaxed text-bone-muted">
+            The key that reverses it is held in the application environment, never in the database.
+            A stolen copy of the database on its own therefore does not expose anyone’s token. An
+            attacker who obtained both the database and that key would be able to read tokens, and
+            with them cast ratings in other people’s names. We judge that risk worth accepting so
+            that a citizen who loses their token is not permanently locked out of participating —
+            but it is a real trade-off, and you are entitled to know we made it.
           </p>
         </section>
 

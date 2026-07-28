@@ -23,8 +23,8 @@ const STEPS = [
   },
   {
     step: '03',
-    title: 'You see it exactly once',
-    body: 'The token is displayed on your Voter Card and nowhere else, ever again. Only a hash of it reaches the database. We cannot show it to you a second time and we cannot issue a replacement — which is the same property that stops anyone else from requesting one in your name.',
+    title: 'You see it once, and can retrieve it later',
+    body: 'The token is displayed on your Voter Card at registration. You can retrieve it again afterwards, but only by proving control of the phone number the account was registered with — you must supply that number and a fresh code sent to it. A session alone is never enough, so a borrowed or stolen laptop does not hand over your vote.',
   },
   {
     step: '04',
@@ -134,8 +134,8 @@ export default function HowItWorksPage() {
             </p>
             <p>
               Signing in does not grant voting authority on its own — every submission must also
-              present the raw token, which is never stored anywhere on our side. A stolen session
-              cookie therefore cannot cast a rating.
+              present the raw token. A stolen session cookie therefore cannot cast a rating on its
+              own, and retrieving the token needs a fresh code sent to your registered phone.
             </p>
             <p className="text-sm text-bone-dim">
               No system of this kind is perfect, and it would be dishonest to claim otherwise. What
@@ -155,9 +155,18 @@ export default function HowItWorksPage() {
               your county.
             </p>
             <p>
-              <strong className="text-bone">Never stored:</strong> your national ID number, your
-              phone number, and your voting token — all three exist on our servers only as
-              irreversible hashes.
+              <strong className="text-bone">Never stored in readable form:</strong> your national ID
+              number and your phone number. Both exist on our servers only as irreversible hashes,
+              and cannot be read back — not by us, and not by anyone who obtained a copy of the
+              database.
+            </p>
+            <p>
+              <strong className="text-bone">Stored encrypted:</strong> your voting token. So that we
+              can show it to you again after you prove control of your phone, the token is held
+              encrypted rather than hashed. Being honest about the trade-off: unlike your ID number,
+              this one <em>is</em> reversible by design. It is protected by an encryption key held
+              separately from the database, so a stolen database alone does not expose it — but a
+              stolen database <em>and</em> that key would.
             </p>
             <p>
               <strong className="text-bone">Never published:</strong> anything that could identify

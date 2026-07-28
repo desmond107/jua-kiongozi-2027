@@ -42,7 +42,7 @@ const INTEGRITY_POINTS = [
   },
   {
     title: 'Identifiers are never stored in the clear',
-    body: 'National ID numbers, phone numbers and voting tokens exist on our servers only as irreversible keyed hashes. Nothing on this page can be traced to an individual.',
+    body: 'National ID numbers and phone numbers exist on our servers only as irreversible keyed hashes. Voting tokens are stored encrypted, so their owner can retrieve them after re-verifying their phone. Nothing on this page can be traced to an individual either way.',
   },
 ]
 
