@@ -332,26 +332,58 @@ never decoding for a reader who is elsewhere.
 
 ### Legibility over the footage
 
-The hero carries **no scrim**. The video is shown unobstructed across the whole section; the copy
-sits on its own contained backdrop instead (`bg-ink-900/[0.78]` + `backdrop-blur-xl`).
+The hero carries **nothing over the video** — no scrim, no gradient, no panel. The clips run edge to
+edge at full brightness.
 
-That split is measured rather than styled. Sampling all four clips at 4fps found **pure white**
-(255,255,255) behind the text column — bright sky and white shirts — where unobstructed body copy
-scores 1.0:1 against its background. The full-frame scrim that used to fix this was dimming the
-entire video to 13:1 when the standard asks for 3:1.
+Legibility lives on the type instead. `.text-over-video` / `.text-over-video-lg` in
+[globals.css](app/globals.css) wrap a tight dark halo around each glyph using layered
+`drop-shadow` filters. This is the technique broadcast captioning uses, for the same reason: the
+background behind moving footage cannot be known in advance, so the type has to bring its own
+contrast. `drop-shadow` rather than `text-shadow` because it follows the rendered alpha, so it works
+on the gradient headline where the fill is a background clipped to the text.
 
-Against that worst-case white frame, the shipped configuration measures:
+Three small elements also carry their own opaque backing, because a halo is not enough for them:
 
-| Element | Contrast | Requirement |
+- the **IEBC disclaimer pill** — a legal notice, and it was the least readable thing on the page
+  over a bright frame
+- the **secondary CTA**, which used the translucent glass variant and vanished against bright sky
+- the primary CTA, which was already solid
+
+These are chips, not overlays; together they cover a few percent of the frame.
+
+**Honest limitation.** WCAG contrast is defined against a *uniform* background, so a glyph halo
+cannot be expressed as a ratio the way a scrim can — this is not a measured AA pass. It is
+dramatically more readable than bare text on video and is the accepted captioning approach, but if
+you ever need a measured ratio, the earlier scrim measurements are the reference points:
+
+| Treatment | Headline | Body |
 |---|---|---|
-| Headline #F7F5F0 | 9.5:1 | 3:1 (AA large) |
-| Body #F7F5F0 | 9.5:1 | 4.5:1 (AA) |
-| Stat labels #C9CEDA | 6.6:1 | 4.5:1 (AA) |
-| Gold accents #FCD34D | 7.2:1 | 4.5:1 (AA) |
+| Full-frame scrim | 13.0:1 | 9.0:1 |
+| Edgeless falloff | 5.9:1 | 5.9:1 |
+| Nothing (current, plus halo) | 1.0:1 unaided | 1.0:1 unaided |
 
-**If you change the clips, re-check this.** Footage brighter than what was sampled could push the
-backdrop below AA. The panel opacity is the dial: 47% is the floor for the headline, 59% for body
-copy, and it currently sits at 78%.
+Sampling the clips at 4fps finds pure white (255,255,255) behind the text column, which is where
+that 1.0:1 comes from. Re-check by eye against the brightest frame if you change the footage.
+
+### The rotating headline
+
+Four phrases cycle with the footage — `HERO_PHRASES` in
+[hero-video.constants.ts](frontend/components/hero/hero-video.constants.ts), index-matched to
+`HERO_CLIPS`, so a phrase is never stranded over the wrong clip and the two cannot drift. The player
+reports each clip change upward; only when there is no video does the headline run its own 7-second
+timer.
+
+Points worth preserving if you edit this:
+
+- **One `<h1>`.** The contents swap; a second heading is never mounted.
+- **`aria-live="off"`.** Announcing a new headline every seven seconds would talk over a
+  screen-reader user mid-sentence. They get the current phrase on navigation, as a sighted visitor
+  does.
+- **Held still under reduced motion**, and pausing the video pauses the words too, since the words
+  follow the clip rather than a clock.
+- **Fixed heading height**, so the copy beneath does not jump. A phrase longer than the limits in
+  `tests/unit/hero-video.test.ts` would wrap past it and reintroduce the shift.
+- Phrases are asserted to name **no candidate or party**.
 
 ### Encoding
 

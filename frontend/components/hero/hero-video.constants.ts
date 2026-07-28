@@ -41,3 +41,23 @@ export const HERO_CLIPS: readonly HeroClip[] = [
 export function nextClipIndex(current: number, delta: number, total = HERO_CLIPS.length): number {
   return (((current + delta) % total) + total) % total
 }
+
+/**
+ * Headline phrases, index-matched to the clips.
+ *
+ * The words turn over with the footage rather than on a timer of their own, so
+ * a phrase is never left stranded over the wrong clip and the two never drift
+ * apart. `lead` renders plain, `accent` in the gradient treatment.
+ *
+ * Editorial rule, same as everywhere else on this platform: dignified, and
+ * strictly non-partisan. Nothing here may favour a candidate or imply an
+ * outcome — these words sit above a rating tool, not a campaign.
+ */
+export type HeroPhrase = { lead: string; accent: string }
+
+export const HERO_PHRASES: readonly HeroPhrase[] = [
+  { lead: 'Your Voice.', accent: 'Verified. Transparent.' },
+  { lead: 'One Citizen.', accent: 'One Voice. Counted.' },
+  { lead: 'Every County.', accent: 'Heard. Recorded.' },
+  { lead: 'The Record.', accent: 'Open. Auditable.' },
+] as const

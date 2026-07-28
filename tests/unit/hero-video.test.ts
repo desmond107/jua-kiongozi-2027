@@ -1,7 +1,11 @@
 import { existsSync, statSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { HERO_CLIPS, nextClipIndex } from '@/frontend/components/hero/hero-video.constants'
+import {
+  HERO_CLIPS,
+  HERO_PHRASES,
+  nextClipIndex,
+} from '@/frontend/components/hero/hero-video.constants'
 
 /**
  * The hero clip sequence.
@@ -137,6 +141,53 @@ describe('clip assets', () => {
         statSync(file).size,
         `${clip.src} is ${megabytes.toFixed(1)}MB — transcode it before shipping`,
       ).toBeLessThan(MAX_BYTES)
+    }
+  })
+})
+
+describe('headline phrases', () => {
+  it('has one phrase per clip, so the words and footage stay in step', () => {
+    // The headline follows the clip index directly. A mismatch here would leave
+    // a phrase stranded, or index past the end of the array.
+    expect(HERO_PHRASES).toHaveLength(HERO_CLIPS.length)
+  })
+
+  it('indexes safely for every clip position', () => {
+    for (let i = 0; i < HERO_CLIPS.length; i += 1) {
+      expect(HERO_PHRASES[i]).toBeDefined()
+    }
+  })
+
+  it('loops back to the first phrase after the last', () => {
+    expect(nextClipIndex(HERO_PHRASES.length - 1, 1, HERO_PHRASES.length)).toBe(0)
+  })
+
+  it('gives every phrase both halves, and keeps them distinct', () => {
+    for (const phrase of HERO_PHRASES) {
+      expect(phrase.lead.trim().length).toBeGreaterThan(0)
+      expect(phrase.accent.trim().length).toBeGreaterThan(0)
+    }
+
+    const rendered = HERO_PHRASES.map((p) => `${p.lead} ${p.accent}`)
+    expect(new Set(rendered).size).toBe(HERO_PHRASES.length)
+  })
+
+  it('keeps every phrase short enough not to reflow the hero', () => {
+    // The headline reserves a fixed height so the copy beneath does not jump as
+    // the words change; a long phrase would wrap past it and reintroduce the
+    // shift this was written to avoid.
+    for (const phrase of HERO_PHRASES) {
+      expect(phrase.lead.length).toBeLessThanOrEqual(18)
+      expect(phrase.accent.length).toBeLessThanOrEqual(24)
+    }
+  })
+
+  it('names no candidate or party', () => {
+    // The platform's neutrality rule reaches the hero copy too: these words sit
+    // above a rating tool, and must not favour anyone in the field.
+    const forbidden = /ruto|karua|kalonzo|wanjigi|matiang|mwangi|maraga|uda\b|azimio|wiper|jubilee/i
+    for (const phrase of HERO_PHRASES) {
+      expect(`${phrase.lead} ${phrase.accent}`).not.toMatch(forbidden)
     }
   })
 })

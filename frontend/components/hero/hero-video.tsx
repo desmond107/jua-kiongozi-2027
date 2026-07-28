@@ -43,10 +43,33 @@ import { HERO_CLIPS, nextClipIndex } from './hero-video.constants'
  *    extension, and an unhandled rejection would leave a frozen first frame.
  */
 
-export function HeroVideo({ onUnavailable }: { onUnavailable?: () => void }) {
+export function HeroVideo({
+  onUnavailable,
+  onClipChange,
+}: {
+  onUnavailable?: () => void
+  /** Fires whenever the active clip changes, so the headline can follow it. */
+  onClipChange?: (index: number) => void
+}) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const reducedMotion = useReducedMotion()
+
+  /**
+   * Both callbacks are held in refs, not read from props inside effects.
+   *
+   * The parent re-renders every time the headline turns over, which hands down
+   * fresh function identities. With those in an effect's dependency list the
+   * load-and-play effect re-fired on every phrase change, interrupting playback
+   * mid-clip. The refs keep the latest callback available without making the
+   * effects depend on its identity.
+   */
+  const onUnavailableRef = useRef(onUnavailable)
+  const onClipChangeRef = useRef(onClipChange)
+  useEffect(() => {
+    onUnavailableRef.current = onUnavailable
+    onClipChangeRef.current = onClipChange
+  })
 
   const [index, setIndex] = useState(0)
   const [paused, setPaused] = useState(false)
@@ -59,6 +82,12 @@ export function HeroVideo({ onUnavailable }: { onUnavailable?: () => void }) {
   // no clip is fetched. The controls below still let the visitor step through
   // the stills by hand — the imagery stays, only the movement goes.
   const motionAllowed = !reducedMotion
+
+  // Keep the headline in step with the footage. Reported from an effect rather
+  // than from the click handlers so it also fires when a clip ends on its own.
+  useEffect(() => {
+    onClipChangeRef.current?.(index)
+  }, [index])
 
   const advance = useCallback((delta: number) => {
     setReady(false)
@@ -76,11 +105,11 @@ export function HeroVideo({ onUnavailable }: { onUnavailable?: () => void }) {
   const handleError = useCallback(() => {
     setFailures((count) => {
       const next = count + 1
-      if (next >= HERO_CLIPS.length) onUnavailable?.()
+      if (next >= HERO_CLIPS.length) onUnavailableRef.current?.()
       return next
     })
     advance(1)
-  }, [advance, onUnavailable])
+  }, [advance])
 
   // Load and play whenever the source changes.
   useEffect(() => {
@@ -103,11 +132,20 @@ export function HeroVideo({ onUnavailable }: { onUnavailable?: () => void }) {
 
     if (paused) return
 
-    // `play()` can still reject — a policy extension, a locked-down browser.
-    // Treat that as "no video" and let the artwork stand, rather than leaving a
-    // stuck first frame on screen.
-    video.play().catch(() => onUnavailable?.())
-  }, [index, paused, onUnavailable, motionAllowed])
+    /**
+     * `play()` rejects for two very different reasons, and conflating them is a
+     * bug: an AbortError just means a newer `load()` superseded this play, which
+     * happens routinely every time the clip changes. Only a genuine refusal —
+     * NotAllowedError from autoplay policy, NotSupportedError from a codec —
+     * means there will never be video, and only that should retire the player.
+     *
+     * Treating AbortError as fatal killed the footage after the first clip.
+     */
+    video.play().catch((error: DOMException) => {
+      if (error?.name === 'AbortError') return
+      onUnavailableRef.current?.()
+    })
+  }, [index, paused, motionAllowed])
 
   // Stop decoding once the hero scrolls away, and resume when it returns.
   useEffect(() => {
