@@ -19,6 +19,7 @@ candidate, and view fully public real-time results.
 - [Deploying to Vercel](#deploying-to-vercel)
 - [Architecture](#architecture)
 - [Security model](#security-model)
+- [Hero videos](#hero-videos)
 - [Design system](#design-system)
 - [Accessibility](#accessibility)
 - [Common tasks](#common-tasks)
@@ -292,6 +293,90 @@ database still cannot brute-force the ~8-digit Kenyan ID space, because the key 
 
 ---
 
+## Hero videos
+
+The hero plays four clips from `/public` — `jk1-vid.mp4` … `jk4-vid.mp4` — one after another,
+looping back to the first after the last.
+
+### How the sequence works
+
+One `<video>` element, not four. When a clip fires `ended`, the index advances and the `src` is
+swapped ([hero-video.tsx](frontend/components/hero/hero-video.tsx)). Only one file is ever in
+flight.
+
+**The element must not carry `loop`.** With `loop` set, `ended` never fires and clip one repeats
+forever — the sequence silently stops advancing. The ordering itself is unit-tested in
+`tests/unit/hero-video.test.ts`, including wrap-around in both directions.
+
+### When video is used, and what happens otherwise
+
+The footage is the hero backdrop — it replaced the illustrated artwork that used to fill this slot.
+Each clip ships with a ~25KB still taken from its own opening second, set as the element's `poster`
+and painted underneath it, so the hero shows the real footage from first paint and a clip swap never
+reveals a void.
+
+| Visitor | What they get |
+|---|---|
+| Normal | Clips play and loop, poster covers the buffer |
+| Reduced motion | The same footage, held still as a poster frame. No `<video>` mounted, no clip bytes fetched. Dots still step through the stills |
+| Metered / slow connection (Save-Data, 2g/3g) | Illustrated SVG carousel |
+| No H.264 decoder | Illustrated SVG carousel |
+| Every clip failed, or autoplay refused | Illustrated SVG carousel |
+
+Screen size is deliberately **not** a gate. It used to be, back when the clips were 45MB each; at
+~1.9MB that restriction cost mobile visitors the hero for no real saving. Video now plays on phones
+too — verified at 390×844.
+
+Playback pauses when the hero scrolls out of view and when the tab is backgrounded, so a clip is
+never decoding for a reader who is elsewhere.
+
+### Encoding
+
+The clips ship as **720p H.264, CRF 28, faststart, audio stripped**. They arrived as 4K masters at
+~50 Mbps carrying AAC audio the hero never plays — 131 MB for 28 seconds of muted background, which
+is not deliverable over the mobile data this platform's audience actually uses.
+
+| File | Master | Shipped | Reduction |
+|---|---|---|---|
+| jk1-vid.mp4 | 3840×2160, 43.1 MB | 1280×720, 1.94 MB | 22.2× |
+| jk2-vid.mp4 | 3840×2160, 37.6 MB | 1280×720, 1.64 MB | 22.9× |
+| jk3-vid.mp4 | 1280×720, 4.6 MB | 1280×720, 1.36 MB | 3.4× |
+| jk4-vid.mp4 | 3840×2160, 45.3 MB | 1280×720, 1.96 MB | 23.2× |
+| **Total** | **131 MB** | **6.9 MB** | **19×** |
+
+720p rather than 1080p because the clips sit behind a heavy scrim and video is withheld from
+phone-sized viewports anyway, so nothing above 720p is ever meaningfully visible. CRF 28 was chosen
+by comparing extracted frames at 23/26/28/30 — 28 shows no visible blocking at hero scale.
+
+Masters are preserved in `video-sources/` (gitignored, never served). To re-encode after replacing
+one:
+
+```bash
+for f in jk1 jk2 jk3 jk4; do
+  ffmpeg -i "video-sources/$f-vid.master.mp4" \
+    -vf "scale='min(1280,iw)':-2" \
+    -c:v libx264 -preset slow -crf 28 -profile:v high -pix_fmt yuv420p \
+    -movflags +faststart -an "public/$f-vid.mp4" -y
+done
+```
+
+`scale='min(1280,iw)'` avoids upscaling a source that is already smaller. `-an` strips audio, which
+is free here because the hero is always muted. `+faststart` moves the `moov` atom ahead of the media
+data so playback can begin before the file has fully downloaded — without it a clip will not start
+until the last byte arrives.
+
+`tests/unit/hero-video.test.ts` enforces a 3 MB per-clip ceiling, so re-uploading an uncompressed
+master fails CI rather than reaching production.
+
+### Swapping the clips
+
+Edit `HERO_CLIPS` in [hero-video.constants.ts](frontend/components/hero/hero-video.constants.ts).
+Each entry needs a `src` under `/public` and a `caption`, which becomes the accessible name of that
+clip's dot control. The tests assert every referenced file exists, so a rename that misses one fails
+the suite instead of silently degrading to the carousel.
+
+---
+
 ## Design system
 
 "Vibrant elegance with depth": a near-black navy base (`#0A0E1A`) with the three Kenyan flag accents
@@ -446,6 +531,11 @@ only curl:
 npm run build && npm start          # in one shell
 BASE_URL=http://localhost:3000 ./scripts/smoke.sh
 ```
+
+> **Reseed first if you have just run the test suite.** The integration tests truncate every table,
+> candidates included, and `/api/candidates` is ISR-cached for 60 seconds — so a smoke run straight
+> after `npm test` can pick up a cached empty list. Run `npm run db:seed` and give the cache a
+> moment to revalidate.
 
 Against a production build the verification code is correctly withheld from the API response. With
 `SMS_PROVIDER=console` it is still written to the server log, so point the script at it:

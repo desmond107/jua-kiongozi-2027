@@ -6,6 +6,20 @@ import { useReducedMotion } from './useReducedMotion'
 export type DeviceCapability = {
   /** Safe to mount the WebGL scene. */
   canRender3D: boolean
+  /**
+   * The connection can afford the hero footage.
+   *
+   * Gated separately from `canRender3D` because the two cost different things.
+   * WebGL is bound by GPU and RAM; video is bound by BANDWIDTH. A cheap phone
+   * on good wifi should get the footage even though it cannot handle the 3D
+   * scene; a powerful laptop tethered to a metered phone should not.
+   *
+   * This deliberately does NOT account for reduced motion. A visitor who asked
+   * for less motion should still see the hero imagery — just held still — so
+   * the caller pairs this with `canAnimate` to decide between a playing clip
+   * and a static poster frame.
+   */
+  canPlayVideo: boolean
   /** Safe to run continuous animation (parallax, autoplay, tilt). */
   canAnimate: boolean
   /** True until the capability probe has run, so callers can hold back. */
@@ -31,6 +45,7 @@ export type DeviceCapability = {
 export function useDeviceCapability(): DeviceCapability {
   const reducedMotion = useReducedMotion()
   const [capable, setCapable] = useState(false)
+  const [videoCapable, setVideoCapable] = useState(false)
   const [probing, setProbing] = useState(true)
 
   useEffect(() => {
@@ -63,11 +78,29 @@ export function useDeviceCapability(): DeviceCapability {
     setCapable(
       webglAvailable && !smallViewport && !slowNetwork && cores > 4 && memory > 4,
     )
+
+    /**
+     * Video is gated on BANDWIDTH only — not on screen size, and not on CPU/GPU.
+     *
+     * Phone-sized viewports used to be excluded because the clips were 45MB
+     * each; at ~1.9MB after transcoding that restriction cost mobile visitors
+     * the hero for no real saving, so it is gone. What remains is the case the
+     * gate exists for: a metered or genuinely slow connection, where even 2MB
+     * is an imposition and the clip would stall rather than play.
+     *
+     * `canPlayType` guards the exotic case of a browser without H.264.
+     */
+    const canDecodeMp4 = document
+      .createElement('video')
+      .canPlayType('video/mp4; codecs="avc1.42E01E"')
+
+    setVideoCapable(Boolean(canDecodeMp4) && !slowNetwork)
     setProbing(false)
   }, [])
 
   return {
     canRender3D: capable && !reducedMotion,
+    canPlayVideo: videoCapable,
     canAnimate: !reducedMotion,
     probing,
   }

@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowRight, BarChart3, ShieldCheck } from 'lucide-react'
 import { Button } from '@/frontend/components/ui/button'
@@ -15,6 +16,17 @@ import { HeroCarousel } from './hero-carousel'
  * that fails the capability probe it is never even requested.
  */
 const HeroScene = dynamic(() => import('./hero-scene'), {
+  ssr: false,
+  loading: () => null,
+})
+
+/**
+ * Same treatment for the video backdrop, and for a stronger reason: it must
+ * never render during SSR, because the server has no idea whether this visitor
+ * is on wifi or on a metered handset. Deciding on the client keeps the initial
+ * HTML identical for everyone and the capability probe authoritative.
+ */
+const HeroVideo = dynamic(() => import('./hero-video'), {
   ssr: false,
   loading: () => null,
 })
@@ -34,12 +46,25 @@ const rise = {
 }
 
 export function Hero({ registeredVoters, totalVotes }: HeroProps) {
-  const { canRender3D } = useDeviceCapability()
+  const { canRender3D, canPlayVideo } = useDeviceCapability()
+
+  // Set when every clip has failed to load, or autoplay was refused. Once true
+  // the illustrated carousel takes over permanently rather than retrying.
+  const [videoUnavailable, setVideoUnavailable] = useState(false)
+
+  const showVideo = canPlayVideo && !videoUnavailable
 
   return (
     <section className="relative isolate flex min-h-[92vh] items-center overflow-hidden">
-      {/* Layer 1 — photographic/illustrative carousel, furthest back. */}
-      <HeroCarousel />
+      {/* Layer 1 — the backdrop.
+          The four clips play in sequence and loop; on a metered or slow
+          connection, a phone-sized screen, or under reduced motion, the
+          illustrated carousel runs instead. Exactly one of the two is mounted,
+          so there is never a second set of controls or a duplicate scrim, and
+          the video's bytes are never fetched on a device that was not going to
+          play them. The first client render always matches the server (video is
+          client-only), so this swap cannot cause a hydration mismatch. */}
+      {showVideo ? <HeroVideo onUnavailable={() => setVideoUnavailable(true)} /> : <HeroCarousel />}
 
       {/* Layer 2 — the 3D depth scene, sitting between the art and the copy.
           Absent entirely on reduced-motion or lower-powered devices; the

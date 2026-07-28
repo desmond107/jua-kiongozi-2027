@@ -40,3 +40,6 @@ next-env.d.ts
 # every env file stays local — .env.example is the only one that ships
 .env*
 !.env.example
+
+# Uncompressed hero masters — kept locally, never served or committed
+video-sources/

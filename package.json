@@ -35,6 +35,7 @@
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "ffmpeg": "^0.0.4",
     "framer-motion": "^12.42.2",
     "jose": "^6.2.4",
     "lucide-react": "^1.27.0",

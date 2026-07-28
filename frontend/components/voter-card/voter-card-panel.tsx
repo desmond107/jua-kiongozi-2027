@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2, Info, LogOut } from 'lucide-react'
-import type { AccountStatus } from '@/backend/services/auth.service'
+import type { AccountStatus, RegistrationResult } from '@/backend/services/auth.service'
 import { Button } from '@/frontend/components/ui/button'
 import { api } from '@/frontend/lib/api'
 import { formatDate } from '@/frontend/lib/format'
@@ -29,24 +29,44 @@ export function VoterCardPanel({
   totalCandidates: number
 }) {
   const router = useRouter()
-  const issued = useRegistrationStore((state) => state.issued)
-  const clear = useRegistrationStore((state) => state.clear)
   const [signingOut, setSigningOut] = useState(false)
 
-  // Read the token once, then drop it from the store so a client-side
-  // navigation back to this page cannot surface it a second time.
-  const [rawToken] = useState(() => issued?.rawToken)
+  /**
+   * The just-issued registration, claimed from the in-memory store AFTER mount.
+   *
+   * WHY THIS IS NOT READ DURING RENDER
+   * ──────────────────────────────────
+   * This component is server-rendered. During SSR the Zustand store is always
+   * empty, so the server emits the "no token" tree. But a citizen arriving here
+   * straight from `/register` has a populated store in the same JS context, so
+   * reading it during render made the FIRST client render disagree with the
+   * server HTML — a different masked phone, a token panel that only one side
+   * had, and `<TokenReveal />` present on the server but not the client. React
+   * calls that a hydration failure, and it fired on the single most important
+   * screen in the product.
+   *
+   * Claiming it in an effect keeps the first client render byte-identical to the
+   * server's, then reveals the token on the next commit. `getState()` rather
+   * than the hook, so there is no render-time subscription to regress into.
+   */
+  const [issued, setIssued] = useState<RegistrationResult | null>(null)
 
   // A token retrieved on demand this session. Held in component state only —
   // never written to the registration store, which would let a later navigation
   // resurface it without re-verification.
   const [retrieved, setRetrieved] = useState<string | null>(null)
 
-  const visibleToken = rawToken ?? retrieved ?? undefined
-
   useEffect(() => {
-    if (issued) clear()
-  }, [issued, clear])
+    const claimed = useRegistrationStore.getState().issued
+    if (!claimed) return
+
+    // Claim it once, then drop it from the store so a client-side navigation
+    // back to this page cannot surface it a second time.
+    setIssued(claimed)
+    useRegistrationStore.getState().clear()
+  }, [])
+
+  const visibleToken = issued?.rawToken ?? retrieved ?? undefined
 
   async function signOut() {
     setSigningOut(true)

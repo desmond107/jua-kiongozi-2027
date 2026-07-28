@@ -68,6 +68,18 @@ export function groupToken(token: string): string {
   return (clean.match(/.{1,4}/g) ?? []).join('-')
 }
 
+/**
+ * "3 minutes ago".
+ *
+ * NOT HYDRATION-SAFE, and cannot be made so: it reads `Date.now()`, which
+ * differs between the server render and the client's hydration pass, so the two
+ * emit different text and React reports a mismatch.
+ *
+ * Only call this from inside an effect or an event handler — never in the body
+ * of a component that is server-rendered. If you need a timestamp in markup,
+ * use `formatDate` or `formatDateTime`; both pin the zone and are pure
+ * functions of their input.
+ */
 export function relativeTime(iso: string): string {
   const seconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000)
   const formatter = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
