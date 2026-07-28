@@ -20,6 +20,19 @@ export const flagRepository = {
     return prisma.flag.count()
   },
 
+  /** Flag counts for a single candidate, without tallying the whole table. */
+  async tallyForCandidate(candidateId: string): Promise<Record<FlagColor, number>> {
+    const rows = await prisma.flag.groupBy({
+      by: ['color'],
+      _count: { _all: true },
+      where: { candidateId },
+    })
+
+    const counts: Record<FlagColor, number> = { GREEN: 0, ORANGE: 0, RED: 0, BLACK: 0 }
+    for (const row of rows) counts[row.color] = row._count._all
+    return counts
+  },
+
   async tallyByCandidate(): Promise<
     Array<{ candidateId: string; color: FlagColor; count: number }>
   > {

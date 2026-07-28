@@ -20,6 +20,7 @@ candidate, and view fully public real-time results.
 - [Architecture](#architecture)
 - [Security model](#security-model)
 - [Hero videos](#hero-videos)
+- [Performance](#performance)
 - [Design system](#design-system)
 - [Accessibility](#accessibility)
 - [Common tasks](#common-tasks)
@@ -429,6 +430,68 @@ Edit `HERO_CLIPS` in [hero-video.constants.ts](frontend/components/hero/hero-vid
 Each entry needs a `src` under `/public` and a `caption`, which becomes the accessible name of that
 clip's dot control. The tests assert every referenced file exists, so a rename that misses one fails
 the suite instead of silently degrading to the carousel.
+
+---
+
+## Performance
+
+Measured over the DevTools protocol against a production build, not inferred from bundle sizes.
+
+| Change | Before | After |
+|---|---|---|
+| `/transparency` First Load JS | 260 kB | **138 kB** |
+| Fonts on the critical path | 84 kB | **66 kB** |
+| Hero video starts | with first paint | **after idle (~1.0s vs 248ms FCP)** |
+| Repeat visit, hero media | ~7 MB re-fetched | **served from cache** |
+| Candidate profile queries | tally across all candidates | single-candidate count |
+
+### What each change does
+
+**Static media was uncached.** Files in `/public` are served `Cache-Control: max-age=0` by default,
+so the ~7MB of hero footage was re-downloaded on *every* visit. [next.config.mjs](next.config.mjs)
+now sets 30 days on the clips, posters and icons. This was the single largest inefficiency and it is
+invisible unless you read response headers.
+
+30 days rather than a year-and-immutable because the filenames are stable — a clip replaced in place
+would otherwise stay pinned in caches. Rename a clip if you need it live immediately; the playlist
+and its tests reference filenames explicitly, so a rename is a tracked change.
+
+**The video competed with first paint.** `preload="auto"` on mount put ~2MB in contention with the
+fonts, CSS and JS the page needs to become usable — the footage was 91% of all bytes transferred.
+The element is now withheld until `requestIdleCallback`. Measured ordering:
+
+```
++  54ms  fonts
++ 248ms  FIRST CONTENTFUL PAINT
++ 459ms  hero poster (25KB)
++1042ms  hero video (2MB)
+```
+
+Nothing changes visually: the poster is already on screen and the clip fades in over it.
+
+**Recharts is now code-split.** It was 109 kB of the transparency page's JavaScript and none of it is
+needed to read the headline figures, the methodology panel, or the results *table* — which is the
+accessible equivalent of the charts and stays server-rendered. The numbers are readable while the
+charting library is still arriving. Skeletons match the chart heights so nothing jumps.
+
+**Fraunces was loading every weight.** The display face renders at semibold and nowhere else, but
+next/font was fetching the full variable range including the SOFT and WONK axes. Pinned to `600`.
+
+**`optimizePackageImports`** rewrites barrel imports for `lucide-react`, `recharts` and
+`framer-motion`, so the bundler does not have to prove ~1,500 unused icons are dead.
+
+**A profile page tallied the whole table.** `getCandidateBySlug` called `listCandidates()` and threw
+away all but one row — a grouped tally across every candidate to answer a question about one. Now a
+single-candidate count. Harmless at seven candidates; not at scale.
+
+### Still on the table
+
+- The hero is still ~2MB on a cold visit. The floor is the footage itself — see
+  [Hero videos](#hero-videos) for the encode settings if you want it smaller.
+- Inter accounts for the remaining 48 kB of fonts. It renders at three weights, so a variable face is
+  the right call, but a subset would trim it further.
+- No security headers are set. `next.config.mjs` now has a `headers()` block, so adding CSP, HSTS and
+  `X-Frame-Options` is a few lines in the same place.
 
 ---
 

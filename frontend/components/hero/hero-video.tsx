@@ -71,6 +71,32 @@ export function HeroVideo({
     onClipChangeRef.current = onClipChange
   })
 
+  /**
+   * The <video> is withheld until the browser is idle.
+   *
+   * The poster is ~25KB and paints immediately; the clip is ~2MB. Mounting both
+   * together put that 2MB in contention with the fonts, CSS and JS the page
+   * needs to become usable — on a measured load the footage was 91% of all
+   * bytes transferred. Arming after `requestIdleCallback` lets first paint and
+   * hydration finish first, then the video starts. Visually nothing changes:
+   * the poster is already on screen and the clip fades in over it.
+   */
+  const [armed, setArmed] = useState(false)
+
+  useEffect(() => {
+    const idle = window.requestIdleCallback
+
+    // Safari has no requestIdleCallback; a short timeout is close enough, since
+    // all this needs to do is yield past the critical path.
+    if (typeof idle !== 'function') {
+      const timer = setTimeout(() => setArmed(true), 400)
+      return () => clearTimeout(timer)
+    }
+
+    const handle = idle(() => setArmed(true), { timeout: 2000 })
+    return () => window.cancelIdleCallback?.(handle)
+  }, [])
+
   const [index, setIndex] = useState(0)
   const [paused, setPaused] = useState(false)
   const [ready, setReady] = useState(false)
@@ -82,6 +108,14 @@ export function HeroVideo({
   // no clip is fetched. The controls below still let the visitor step through
   // the stills by hand — the imagery stays, only the movement goes.
   const motionAllowed = !reducedMotion
+
+  /**
+   * Both conditions must hold for the element to exist: the visitor accepts
+   * motion, AND the browser has finished the work that makes the page usable.
+   * Kept separate from `motionAllowed` so the reduced-motion rule stays legible
+   * on its own terms.
+   */
+  const videoActive = motionAllowed && armed
 
   // Keep the headline in step with the footage. Reported from an effect rather
   // than from the click handlers so it also fires when a clip ends on its own.
@@ -114,7 +148,7 @@ export function HeroVideo({
   // Load and play whenever the source changes.
   useEffect(() => {
     const video = videoRef.current
-    if (!video || !motionAllowed) return
+    if (!video || !videoActive) return
 
     /**
      * Set `muted` on the ELEMENT, not just via the JSX prop.
@@ -145,13 +179,13 @@ export function HeroVideo({
       if (error?.name === 'AbortError') return
       onUnavailableRef.current?.()
     })
-  }, [index, paused, motionAllowed])
+  }, [index, paused, videoActive])
 
   // Stop decoding once the hero scrolls away, and resume when it returns.
   useEffect(() => {
     const container = containerRef.current
     const video = videoRef.current
-    if (!container || !video || !motionAllowed) return
+    if (!container || !video || !videoActive) return
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -167,7 +201,7 @@ export function HeroVideo({
 
     observer.observe(container)
     return () => observer.disconnect()
-  }, [paused, motionAllowed])
+  }, [paused, videoActive])
 
   // A backgrounded tab should not be streaming 4K.
   useEffect(() => {
@@ -180,7 +214,7 @@ export function HeroVideo({
 
     document.addEventListener('visibilitychange', onVisibility)
     return () => document.removeEventListener('visibilitychange', onVisibility)
-  }, [paused, motionAllowed])
+  }, [paused, videoActive])
 
   const togglePaused = useCallback(() => {
     const video = videoRef.current
@@ -208,7 +242,7 @@ export function HeroVideo({
         aria-hidden
       />
 
-      {motionAllowed ? (
+      {videoActive ? (
         <video
           ref={videoRef}
           // Remounting on index change is deliberate: it guarantees the element

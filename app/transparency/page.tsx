@@ -1,9 +1,11 @@
 import type { Metadata } from 'next'
 import { Database, ShieldCheck } from 'lucide-react'
 import { getCachedSnapshot } from '@/backend/services/analytics.service'
-import { ResultsChart } from '@/frontend/components/analytics/results-chart'
-import { FlagDistributionChart } from '@/frontend/components/analytics/flag-distribution-chart'
-import { CountyChart } from '@/frontend/components/analytics/county-chart'
+import {
+  CountyChart,
+  FlagDistributionChart,
+  ResultsChart,
+} from '@/frontend/components/analytics/lazy-charts'
 import { LiveCounter } from '@/frontend/components/analytics/live-counter'
 import { TransparencyTable } from '@/frontend/components/analytics/transparency-table'
 import { Button } from '@/frontend/components/ui/button'

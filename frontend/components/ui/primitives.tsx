@@ -48,8 +48,15 @@ export function Badge({
 }
 
 /** Gradient shimmer placeholder. Match its size to the real content. */
-export function Skeleton({ className }: { className?: string }) {
-  return <div className={cn('skeleton', className)} aria-hidden />
+export function Skeleton({
+  className,
+  style,
+}: {
+  className?: string
+  /** For heights that must match a lazily-loaded component, so nothing jumps. */
+  style?: React.CSSProperties
+}) {
+  return <div className={cn('skeleton', className)} style={style} aria-hidden />
 }
 
 export function SectionHeading({

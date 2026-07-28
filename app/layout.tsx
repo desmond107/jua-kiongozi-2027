@@ -15,6 +15,10 @@ const display = Fraunces({
   subsets: ['latin'],
   variable: '--font-display',
   display: 'swap',
+  // Pinned to the one weight the design actually uses. Left unpinned, next/font
+  // fetches the whole variable range — every weight from 100 to 900 plus the
+  // SOFT and WONK axes — for a face that only ever renders at semibold.
+  weight: '600',
 })
 
 const sans = Inter({

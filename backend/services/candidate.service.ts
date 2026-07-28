@@ -72,11 +72,32 @@ export async function getCandidateBySlug(slug: string): Promise<CandidateSummary
   const candidate = await candidateRepository.findBySlug(slug)
   if (!candidate) throw ApiError.notFound('That candidate could not be found.')
 
-  const all = await listCandidates()
-  const summary = all.find((row) => row.id === candidate.id)
-  if (!summary) throw ApiError.notFound('That candidate could not be found.')
+  /**
+   * Tally only THIS candidate.
+   *
+   * This used to call `listCandidates()` and discard all but one row, which
+   * meant every profile page ran a full grouped tally across every candidate to
+   * answer a question about one of them. Harmless at seven candidates and a
+   * waste at any scale — and the sort of thing that never shows up until the
+   * table is large.
+   */
+  const [flags, votes] = await Promise.all([
+    flagRepository.tallyForCandidate(candidate.id),
+    voteRepository.countForCandidate(candidate.id),
+  ])
 
-  return summary
+  return {
+    id: candidate.id,
+    slug: candidate.slug,
+    fullName: candidate.fullName,
+    party: candidate.party,
+    role: candidate.role,
+    bio: candidate.bio,
+    photoUrl: candidate.photoUrl,
+    flags,
+    totalFlags: flags.GREEN + flags.ORANGE + flags.RED + flags.BLACK,
+    totalVotes: votes,
+  }
 }
 
 export function allCandidateSlugs(): Promise<string[]> {

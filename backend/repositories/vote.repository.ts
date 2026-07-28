@@ -29,6 +29,11 @@ export const voteRepository = {
     return prisma.vote.count()
   },
 
+  /** Total votes for a single candidate — a COUNT, not a grouped scan. */
+  countForCandidate(candidateId: string): Promise<number> {
+    return prisma.vote.count({ where: { candidateId } })
+  },
+
   /**
    * Aggregate tally of every (candidate, choice) pair in a single grouped query
    * — the analytics path never loads individual vote rows.
