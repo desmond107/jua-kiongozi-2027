@@ -4,13 +4,19 @@ const nextConfig = {
 
   experimental: {
     /**
-     * Rewrites barrel imports to deep ones at build time.
+     * Rewrites barrel imports to deep ones at build time. `import { Pause } from
+     * 'lucide-react'` otherwise pulls the package index, and the bundler has to
+     * prove the other ~1,500 icons are unused before it can drop them.
      *
-     * `import { Pause } from 'lucide-react'` otherwise pulls the package index,
-     * and the bundler has to prove the other ~1,500 icons are unused before it
-     * can drop them. Recharts and framer-motion have the same shape.
+     * `recharts` is deliberately NOT in this list — it was measured and buys
+     * nothing. The charts already live in their own dynamic chunk
+     * (frontend/components/analytics/lazy-charts.tsx), so /transparency comes
+     * out at exactly 138 kB either way. Given that, the library is left alone:
+     * Recharts resolves its children by component identity, which is the kind
+     * of thing barrel rewriting can disturb, and there is no upside to trade
+     * against that risk.
      */
-    optimizePackageImports: ['lucide-react', 'recharts', 'framer-motion'],
+    optimizePackageImports: ['lucide-react', 'framer-motion'],
   },
 
   async headers() {

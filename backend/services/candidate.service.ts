@@ -2,8 +2,8 @@ import 'server-only'
 import { candidateRepository } from '@/backend/repositories/candidate.repository'
 import { flagRepository } from '@/backend/repositories/flag.repository'
 import { voteRepository } from '@/backend/repositories/vote.repository'
-import type { FlagBreakdown } from '@/backend/validators'
-import type { FlagColor } from '@/backend/validators'
+import type { FlagBreakdown, VoteBreakdown } from '@/backend/validators'
+import type { FlagColor, VoteChoice } from '@/backend/validators'
 import { ApiError } from '@/backend/utils/http.util'
 
 /**
@@ -24,11 +24,29 @@ export type CandidateSummary = {
   photoUrl: string | null
   flags: FlagBreakdown
   totalFlags: number
+  votes: VoteBreakdown
   totalVotes: number
+  /**
+   * Share of this candidate's votes that were YES, 0–100 to one decimal.
+   *
+   * Carried on the card because it is the figure a visitor most wants to
+   * compare across candidates, and without it the grid could only be read by
+   * opening all seven profiles in turn.
+   */
+  approvalRate: number
 }
 
 function emptyFlags(): FlagBreakdown {
   return { GREEN: 0, ORANGE: 0, RED: 0, BLACK: 0 }
+}
+
+function emptyVotes(): VoteBreakdown {
+  return { YES: 0, NO: 0, NOT_SURE: 0 }
+}
+
+function percentage(part: number, whole: number): number {
+  if (whole === 0) return 0
+  return Math.round((part / whole) * 1000) / 10
 }
 
 export async function listCandidates(): Promise<CandidateSummary[]> {
@@ -45,13 +63,17 @@ export async function listCandidates(): Promise<CandidateSummary[]> {
     flagsByCandidate.set(row.candidateId, bucket)
   }
 
-  const votesByCandidate = new Map<string, number>()
+  const votesByCandidate = new Map<string, VoteBreakdown>()
   for (const row of voteTally) {
-    votesByCandidate.set(row.candidateId, (votesByCandidate.get(row.candidateId) ?? 0) + row.count)
+    const bucket = votesByCandidate.get(row.candidateId) ?? emptyVotes()
+    bucket[row.choice as VoteChoice] = row.count
+    votesByCandidate.set(row.candidateId, bucket)
   }
 
   return candidates.map((candidate) => {
     const flags = flagsByCandidate.get(candidate.id) ?? emptyFlags()
+    const votes = votesByCandidate.get(candidate.id) ?? emptyVotes()
+    const totalVotes = votes.YES + votes.NO + votes.NOT_SURE
 
     return {
       id: candidate.id,
@@ -63,9 +85,44 @@ export async function listCandidates(): Promise<CandidateSummary[]> {
       photoUrl: candidate.photoUrl,
       flags,
       totalFlags: flags.GREEN + flags.ORANGE + flags.RED + flags.BLACK,
-      totalVotes: votesByCandidate.get(candidate.id) ?? 0,
+      votes,
+      totalVotes,
+      approvalRate: percentage(votes.YES, totalVotes),
     }
   })
+}
+
+export type CandidateNeighbours = {
+  previous: { slug: string; fullName: string } | null
+  next: { slug: string; fullName: string } | null
+  position: number
+  total: number
+}
+
+/**
+ * The candidates either side of this one, in display order.
+ *
+ * Exists so a profile is not a dead end. Rating all seven previously meant
+ * returning to the grid between each one, which is friction on the single
+ * action the whole platform is for. Wraps around, so there is always a next.
+ */
+export async function getCandidateNeighbours(slug: string): Promise<CandidateNeighbours> {
+  const all = await candidateRepository.findAll()
+  const index = all.findIndex((candidate) => candidate.slug === slug)
+
+  if (index === -1) throw ApiError.notFound('That candidate could not be found.')
+
+  const at = (offset: number) => {
+    const candidate = all[(index + offset + all.length) % all.length]
+    return candidate ? { slug: candidate.slug, fullName: candidate.fullName } : null
+  }
+
+  return {
+    previous: all.length > 1 ? at(-1) : null,
+    next: all.length > 1 ? at(1) : null,
+    position: index + 1,
+    total: all.length,
+  }
 }
 
 export async function getCandidateBySlug(slug: string): Promise<CandidateSummary> {
@@ -83,8 +140,10 @@ export async function getCandidateBySlug(slug: string): Promise<CandidateSummary
    */
   const [flags, votes] = await Promise.all([
     flagRepository.tallyForCandidate(candidate.id),
-    voteRepository.countForCandidate(candidate.id),
+    voteRepository.tallyForCandidate(candidate.id),
   ])
+
+  const totalVotes = votes.YES + votes.NO + votes.NOT_SURE
 
   return {
     id: candidate.id,
@@ -96,7 +155,9 @@ export async function getCandidateBySlug(slug: string): Promise<CandidateSummary
     photoUrl: candidate.photoUrl,
     flags,
     totalFlags: flags.GREEN + flags.ORANGE + flags.RED + flags.BLACK,
-    totalVotes: votes,
+    votes,
+    totalVotes,
+    approvalRate: percentage(votes.YES, totalVotes),
   }
 }
 

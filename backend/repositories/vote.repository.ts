@@ -29,9 +29,17 @@ export const voteRepository = {
     return prisma.vote.count()
   },
 
-  /** Total votes for a single candidate — a COUNT, not a grouped scan. */
-  countForCandidate(candidateId: string): Promise<number> {
-    return prisma.vote.count({ where: { candidateId } })
+  /** Vote breakdown for a single candidate, without scanning the whole table. */
+  async tallyForCandidate(candidateId: string): Promise<Record<VoteChoice, number>> {
+    const rows = await prisma.vote.groupBy({
+      by: ['choice'],
+      _count: { _all: true },
+      where: { candidateId },
+    })
+
+    const counts: Record<VoteChoice, number> = { YES: 0, NO: 0, NOT_SURE: 0 }
+    for (const row of rows) counts[row.choice] = row._count._all
+    return counts
   },
 
   /**

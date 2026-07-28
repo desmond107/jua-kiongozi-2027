@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
-import { AlertCircle, CheckCircle2, KeyRound, Lock, ShieldCheck } from 'lucide-react'
+import { AlertCircle, ArrowRight, CheckCircle2, KeyRound, Lock, ShieldCheck } from 'lucide-react'
 import {
   VOTE_CHOICE_META,
   VOTE_CHOICE_ORDER,
@@ -38,11 +38,17 @@ export function VoteWidget({
   candidateName,
   signedIn,
   alreadyRated,
+  next,
+  remaining,
 }: {
   candidateId: string
   candidateName: string
   signedIn: boolean
   alreadyRated: boolean
+  /** The following candidate, so a finished rating leads straight on. */
+  next?: { slug: string; fullName: string } | null
+  /** How many candidates this citizen has left, for the progress line. */
+  remaining?: number
 }) {
   const router = useRouter()
   const [choice, setChoice] = useState<VoteChoice | null>(null)
@@ -64,9 +70,18 @@ export function VoteWidget({
           Your voting token has been spent on {candidateName} and cannot be used for them again.
           This is what keeps the results honest — every citizen counts exactly once per candidate.
         </p>
-        <Button asChild variant="glass" size="sm">
-          <Link href="/candidates">Rate another candidate</Link>
-        </Button>
+        {next ? (
+          <Button asChild variant="primary" size="sm">
+            <Link href={`/candidates/${next.slug}`}>
+              Next: {next.fullName}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        ) : (
+          <Button asChild variant="glass" size="sm">
+            <Link href="/candidates">Back to all candidates</Link>
+          </Button>
+        )}
       </div>
     )
   }
@@ -150,11 +165,28 @@ export function VoteWidget({
         <p className="text-sm leading-relaxed text-bone-muted">
           Thank you. Your response for {candidateName} is now part of the public tally, counted
           anonymously alongside everyone else’s.
+          {typeof remaining === 'number' && remaining > 1 ? (
+            <>
+              {' '}
+              <strong className="font-semibold text-bone">
+                {remaining - 1} {remaining - 1 === 1 ? 'candidate' : 'candidates'} left to rate.
+              </strong>
+            </>
+          ) : null}
         </p>
         <div className="flex flex-col gap-2.5 sm:flex-row">
-          <Button asChild variant="verdant" size="sm">
-            <Link href="/candidates">Rate another candidate</Link>
-          </Button>
+          {next ? (
+            <Button asChild variant="verdant" size="sm">
+              <Link href={`/candidates/${next.slug}`}>
+                Next: {next.fullName}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          ) : (
+            <Button asChild variant="verdant" size="sm">
+              <Link href="/candidates">Back to all candidates</Link>
+            </Button>
+          )}
           <Button asChild variant="glass" size="sm">
             <Link href="/transparency">See live results</Link>
           </Button>

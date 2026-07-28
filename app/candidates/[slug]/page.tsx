@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { candidateRepository } from '@/backend/repositories/candidate.repository'
+import { getCandidateNeighbours } from '@/backend/services/candidate.service'
 import { getCandidateAnalytics } from '@/backend/services/analytics.service'
 import { getSession } from '@/backend/services/session.service'
 import { spentCandidatesForUser } from '@/backend/services/token.service'
@@ -13,6 +14,7 @@ import {
   VOTE_CHOICE_LABELS,
   VOTE_CHOICE_ORDER,
 } from '@/backend/validators'
+import { CandidatePager } from '@/frontend/components/candidates/candidate-pager'
 import { CandidatePortrait } from '@/frontend/components/candidates/candidate-portrait'
 import { FlagBar } from '@/frontend/components/candidates/flag-bar'
 import { VoteWidget } from '@/frontend/components/candidates/vote-widget'
@@ -60,9 +62,10 @@ export default async function CandidateProfilePage({ params }: { params: { slug:
 
   const session = await getSession()
 
-  const [analytics, ratedIds] = await Promise.all([
+  const [analytics, ratedIds, neighbours] = await Promise.all([
     getCandidateAnalytics(candidate.id),
     session ? spentCandidatesForUser(session.userId) : Promise.resolve<string[]>([]),
+    getCandidateNeighbours(candidate.slug),
   ])
 
   const alreadyRated = ratedIds.includes(candidate.id)
@@ -76,6 +79,8 @@ export default async function CandidateProfilePage({ params }: { params: { slug:
         <ArrowLeft className="h-4 w-4" aria-hidden />
         All candidates
       </Link>
+
+      <CandidatePager neighbours={neighbours} className="mt-5" />
 
       {/* Profile header */}
       <header className="mt-6 grid gap-8 lg:grid-cols-[280px_1fr]">
@@ -131,7 +136,7 @@ export default async function CandidateProfilePage({ params }: { params: { slug:
       </header>
 
       {/* Vote / flag + current results */}
-      <div className="mt-14 grid gap-8 lg:grid-cols-[1fr_380px]">
+      <div className="mt-14 grid items-start gap-8 lg:grid-cols-[1fr_380px]">
         <div className="space-y-8">
           <section className="glass space-y-5 p-6">
             <h2 className="font-display text-xl font-semibold text-bone">Current standing</h2>
@@ -218,9 +223,13 @@ export default async function CandidateProfilePage({ params }: { params: { slug:
             candidateName={candidate.fullName}
             signedIn={Boolean(session)}
             alreadyRated={alreadyRated}
+            next={neighbours.next}
+            remaining={neighbours.total - ratedIds.length}
           />
         </aside>
       </div>
+
+      <CandidatePager neighbours={neighbours} className="mt-14" />
     </PageContainer>
   )
 }

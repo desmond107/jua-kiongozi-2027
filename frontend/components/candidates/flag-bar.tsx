@@ -66,7 +66,32 @@ export function FlagBar({
             </li>
           ))}
         </ul>
-      ) : null}
+      ) : (
+        /*
+         * Without this the bar is colour and nothing else: a reader has to map
+         * each band back to a legend elsewhere on the page to learn anything.
+         * The two ends carry the meaning — trust and rejection — so those get
+         * their share printed, which makes the bar scannable on its own.
+         */
+        <p className="flex items-center justify-between text-[11px] text-bone-dim">
+          <span className="flex items-center gap-1.5">
+            <span
+              className="h-2 w-2 rounded-full"
+              style={{ backgroundColor: FLAG_META.GREEN.hex }}
+              aria-hidden
+            />
+            {Math.round((flags.GREEN / total) * 100)}% trust
+          </span>
+          <span className="flex items-center gap-1.5">
+            {Math.round(((flags.RED + flags.BLACK) / total) * 100)}% concern
+            <span
+              className="h-2 w-2 rounded-full"
+              style={{ backgroundColor: FLAG_META.RED.hex }}
+              aria-hidden
+            />
+          </span>
+        </p>
+      )}
     </div>
   )
 }

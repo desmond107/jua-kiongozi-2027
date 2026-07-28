@@ -65,7 +65,10 @@ export function FlagDistributionChart({ candidates }: { candidates: CandidateAna
                 <XAxis
                   type="number"
                   domain={[0, 100]}
-                  tickFormatter={(value: number) => `${value}%`}
+                  // Rounded before formatting: the domain max arrives as
+                  // 100.00000000000001 from summing floating-point shares, and
+                  // Recharts prints the raw value.
+                  tickFormatter={(value: number) => `${Math.round(value)}%`}
                   tick={AXIS.tick}
                   axisLine={false}
                   tickLine={false}

@@ -51,7 +51,7 @@ export function LiveCounter({
   }, [inView, value, reducedMotion])
 
   return (
-    <div ref={ref} className={cn('glass p-5', className)}>
+    <div ref={ref} className={cn('glass flex flex-col p-5', className)}>
       <p className="text-xs uppercase tracking-[0.16em] text-bone-dim">{label}</p>
       <p className="mt-2 font-display text-3xl font-semibold text-bone sm:text-4xl">
         {/* The live region announces the settled value, not every tick. */}
@@ -59,7 +59,10 @@ export function LiveCounter({
         <span className="sr-only">{formatNumber(value)}</span>
         {suffix ? <span className="ml-1 text-xl text-bone-dim">{suffix}</span> : null}
       </p>
-      {hint ? <p className="mt-1.5 text-xs leading-relaxed text-bone-dim">{hint}</p> : null}
+      {/* `mt-auto` rather than a fixed margin: tiles are height-matched by the
+          grid, and without this the hint floats mid-tile while its neighbours
+          show a void where their hint would be. */}
+      {hint ? <p className="mt-auto pt-2 text-xs leading-relaxed text-bone-dim">{hint}</p> : null}
     </div>
   )
 }

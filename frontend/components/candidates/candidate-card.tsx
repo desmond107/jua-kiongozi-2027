@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { ArrowUpRight, CheckCircle2 } from 'lucide-react'
 import type { CandidateSummary } from '@/backend/services/candidate.service'
 import { useTilt } from '@/frontend/hooks/useTilt'
-import { formatNumber } from '@/frontend/lib/format'
+import { formatNumber, formatPercent } from '@/frontend/lib/format'
 import { cn } from '@/frontend/lib/utils'
 import { CandidatePortrait } from './candidate-portrait'
 import { FlagBar } from './flag-bar'
@@ -88,7 +88,26 @@ export function CandidateCard({
             </div>
 
             <div className="mt-auto space-y-3">
+              {/*
+                Approval is the figure a visitor most wants to compare across
+                candidates, and the grid previously did not carry it at all —
+                you had to open all seven profiles to rank them. Shown as a
+                labelled number rather than another colour band, so it reads at
+                a glance and does not depend on the legend.
+              */}
+              {candidate.totalVotes > 0 ? (
+                <div className="flex items-baseline justify-between gap-2 border-t border-white/[0.07] pt-3">
+                  <span className="text-[11px] uppercase tracking-[0.14em] text-bone-dim">
+                    Would consider
+                  </span>
+                  <span className="font-display text-xl font-semibold tabular-nums text-bone">
+                    {formatPercent(candidate.approvalRate)}
+                  </span>
+                </div>
+              ) : null}
+
               <FlagBar flags={candidate.flags} total={candidate.totalFlags} />
+
               <p className="text-xs text-bone-dim">
                 {formatNumber(candidate.totalVotes)}{' '}
                 {candidate.totalVotes === 1 ? 'rating' : 'ratings'} recorded

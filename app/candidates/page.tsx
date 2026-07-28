@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { listCandidates } from '@/backend/services/candidate.service'
 import { getSession } from '@/backend/services/session.service'
 import { spentCandidatesForUser } from '@/backend/services/token.service'
-import { CandidateCard } from '@/frontend/components/candidates/candidate-card'
+import { CandidateGrid } from '@/frontend/components/candidates/candidate-grid'
 import { FlagBar } from '@/frontend/components/candidates/flag-bar'
 import { PageContainer, SectionHeading } from '@/frontend/components/ui/primitives'
 import { FLAG_COLOR_ORDER, FLAG_META } from '@/backend/validators'
@@ -23,8 +23,6 @@ export default async function CandidatesPage() {
     listCandidates(),
     session ? spentCandidatesForUser(session.userId) : Promise.resolve<string[]>([]),
   ])
-
-  const rated = new Set(ratedIds)
 
   return (
     <PageContainer className="py-16">
@@ -52,16 +50,7 @@ export default async function CandidatesPage() {
         ))}
       </div>
 
-      <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {candidates.map((candidate, index) => (
-          <CandidateCard
-            key={candidate.id}
-            candidate={candidate}
-            index={index}
-            rated={rated.has(candidate.id)}
-          />
-        ))}
-      </div>
+      <CandidateGrid candidates={candidates} ratedIds={ratedIds} signedIn={Boolean(session)} />
 
       {/* Compact overview — the same data as the cards, ordered and scannable
           in one column for anyone who does not want to read seven cards. */}

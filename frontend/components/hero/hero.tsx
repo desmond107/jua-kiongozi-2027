@@ -157,9 +157,18 @@ export function Hero({ registeredVoters, totalVotes }: HeroProps) {
             custom={0.2}
             className="text-over-video mt-6 max-w-xl text-lg leading-relaxed text-bone"
           >
-            Register once, receive a single secure voting token, and record how you feel about every
-            declared 2027 presidential candidate. Every aggregate result is published openly, for
-            anyone to audit.
+            {/* The long form costs five lines on a phone and pushes the
+                participation figures below the fold; the short form says the
+                same thing in two. */}
+            <span className="sm:hidden">
+              Register once, get a secure voting token, and rate every declared 2027 candidate.
+              Results are published openly.
+            </span>
+            <span className="hidden sm:inline">
+              Register once, receive a single secure voting token, and record how you feel about
+              every declared 2027 presidential candidate. Every aggregate result is published
+              openly, for anyone to audit.
+            </span>
           </motion.p>
 
           <motion.div
