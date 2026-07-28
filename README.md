@@ -330,6 +330,29 @@ too — verified at 390×844.
 Playback pauses when the hero scrolls out of view and when the tab is backgrounded, so a clip is
 never decoding for a reader who is elsewhere.
 
+### Legibility over the footage
+
+The hero carries **no scrim**. The video is shown unobstructed across the whole section; the copy
+sits on its own contained backdrop instead (`bg-ink-900/[0.78]` + `backdrop-blur-xl`).
+
+That split is measured rather than styled. Sampling all four clips at 4fps found **pure white**
+(255,255,255) behind the text column — bright sky and white shirts — where unobstructed body copy
+scores 1.0:1 against its background. The full-frame scrim that used to fix this was dimming the
+entire video to 13:1 when the standard asks for 3:1.
+
+Against that worst-case white frame, the shipped configuration measures:
+
+| Element | Contrast | Requirement |
+|---|---|---|
+| Headline #F7F5F0 | 9.5:1 | 3:1 (AA large) |
+| Body #F7F5F0 | 9.5:1 | 4.5:1 (AA) |
+| Stat labels #C9CEDA | 6.6:1 | 4.5:1 (AA) |
+| Gold accents #FCD34D | 7.2:1 | 4.5:1 (AA) |
+
+**If you change the clips, re-check this.** Footage brighter than what was sampled could push the
+backdrop below AA. The panel opacity is the dial: 47% is the floor for the headline, 59% for body
+copy, and it currently sits at 78%.
+
 ### Encoding
 
 The clips ship as **720p H.264, CRF 28, faststart, audio stripped**. They arrived as 4K masters at

@@ -196,15 +196,17 @@ export function HeroVideo({ onUnavailable }: { onUnavailable?: () => void }) {
         </video>
       ) : null}
 
-      {/* Scrim: guarantees headline contrast whatever frame is showing. */}
-      <div
-        className="absolute inset-0 bg-gradient-to-r from-ink-900 via-ink-900/85 to-ink-900/40"
-        aria-hidden
-      />
-      <div
-        className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-ink-800 to-transparent"
-        aria-hidden
-      />
+      {/*
+        No scrim. The footage is shown unobstructed across the whole hero.
+
+        Legibility is handled instead by a contained backdrop behind the copy
+        itself (see hero.tsx). That choice is measured, not stylistic: sampling
+        every clip at 4fps found PURE WHITE (255,255,255) behind the text column
+        — bright sky and white shirts — where an unobstructed headline scores
+        1.0:1 against its background. A full-frame scrim heavy enough to fix
+        that was dimming the entire video to 13:1, far past the 3:1 the standard
+        asks for. Darkening only the words costs the imagery nothing.
+      */}
 
       {/* Controls, bottom-right so they never collide with the headline. */}
       <div className="absolute bottom-6 right-5 z-20 flex items-center gap-2 sm:right-8">

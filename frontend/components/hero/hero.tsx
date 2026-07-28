@@ -75,9 +75,16 @@ export function Hero({ registeredVoters, totalVotes }: HeroProps) {
         </div>
       ) : null}
 
-      {/* Layer 3 — content. */}
+      {/* Layer 3 — content.
+
+          The copy carries its own backdrop rather than relying on a scrim over
+          the video. Opacity is derived, not eyeballed: the brightest pixel the
+          clips ever put behind this column is pure white, which needs 47% to
+          clear AA-large for the headline and 59% for body copy at #F7F5F0. 78%
+          leaves headroom for a frame brighter than anything sampled, while the
+          rest of the hero shows the footage completely unobstructed. */}
       <div className="relative z-20 mx-auto w-full max-w-6xl px-5 py-24 sm:px-8">
-        <div className="max-w-2xl">
+        <div className="max-w-2xl rounded-4xl border border-white/10 bg-ink-900/[0.78] p-7 backdrop-blur-xl sm:p-10">
           <motion.div variants={rise} initial="hidden" animate="visible" custom={0}>
             <span className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/[0.08] px-4 py-1.5 text-xs font-medium tracking-wide text-gold-soft backdrop-blur-md">
               <span className="relative flex h-1.5 w-1.5">
@@ -105,7 +112,7 @@ export function Hero({ registeredVoters, totalVotes }: HeroProps) {
             initial="hidden"
             animate="visible"
             custom={0.2}
-            className="mt-6 max-w-xl text-lg leading-relaxed text-bone-muted"
+            className="mt-6 max-w-xl text-lg leading-relaxed text-bone"
           >
             Register once, receive a single secure voting token, and record how you feel about every
             declared 2027 presidential candidate. Every aggregate result is published openly, for
@@ -141,7 +148,7 @@ export function Hero({ registeredVoters, totalVotes }: HeroProps) {
             className="mt-12 flex flex-wrap items-center gap-x-10 gap-y-5"
           >
             <div>
-              <dt className="text-xs uppercase tracking-[0.16em] text-bone-dim">
+              <dt className="text-xs uppercase tracking-[0.16em] text-bone-muted">
                 Citizens registered
               </dt>
               <dd className="mt-1 font-display text-2xl font-semibold text-bone">
@@ -149,7 +156,7 @@ export function Hero({ registeredVoters, totalVotes }: HeroProps) {
               </dd>
             </div>
             <div>
-              <dt className="text-xs uppercase tracking-[0.16em] text-bone-dim">Ratings cast</dt>
+              <dt className="text-xs uppercase tracking-[0.16em] text-bone-muted">Ratings cast</dt>
               <dd className="mt-1 font-display text-2xl font-semibold text-bone">
                 {formatNumber(totalVotes)}
               </dd>
@@ -161,7 +168,7 @@ export function Hero({ registeredVoters, totalVotes }: HeroProps) {
               platform can establish that. Claiming a verified *citizen* would
               overstate what the system actually proves. See /how-it-works.
             */}
-            <div className="flex items-center gap-2 text-sm text-bone-dim">
+            <div className="flex items-center gap-2 text-sm text-bone-muted">
               <ShieldCheck className="h-4 w-4 text-verdant" aria-hidden />
               One voice per verified phone number
             </div>
