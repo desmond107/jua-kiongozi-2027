@@ -61,7 +61,7 @@ createdb jua_kiongozi_2027
 | Script | Does |
 |---|---|
 | `npm run dev` | Development server |
-| `npm run build` | `prisma generate` + `migrate deploy` + seed + production build |
+| `npm run build` | `prisma generate` + `migrate deploy` + production build (no seed) |
 | `npm run start` | Serve the production build |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` |
@@ -127,23 +127,29 @@ hop count here would read the wrong end of a header Vercel already normalised.
 **3. `SMS_PROVIDER` is required.** Without it, `/api/auth/request-otp` returns 503 and nobody can
 register — the app refuses to hand out accounts it cannot gate. The rest of the site still works.
 
-### The build applies migrations and seeds
+### The build applies migrations, but does not seed
 
 ```
-prisma generate && prisma migrate deploy && prisma db seed && next build
+prisma generate && prisma migrate deploy && next build
 ```
 
 `migrate deploy` is what creates the tables. Without it a correctly configured `DATABASE_URL` still
 yields a schema-less database, and every page that reads it throws. It never generates new
-migrations and never drops data, so it is safe to run on every deploy. The seed upserts the seven
-candidates and touches nothing else, so it will not disturb accumulated votes.
+migrations and never drops data, so it is safe to run on every deploy.
 
-Two consequences worth knowing:
+**Seeding is deliberately not part of the build.** The seed upserts, and its `update` branch rewrites
+every candidate field — so running it on each deploy would silently revert any candidate copy edited
+in production back to whatever `prisma/seed.ts` says. Seed a new database once, by hand:
 
-- **The build now fails loudly if `DATABASE_URL` is missing or unreachable**, rather than succeeding
-  and producing a deployment that errors on every request. That is the intended trade.
-- **The seed runs `tsx`, a devDependency.** Vercel installs devDependencies at build time by
-  default. If you switch to a production-only install, move the seed to a separate one-off step.
+```
+DATABASE_URL="postgresql://…" npm run db:seed
+```
+
+and re-run it only when you have actually changed the `CANDIDATES` array.
+
+One consequence worth knowing: **the build fails loudly if `DATABASE_URL` is missing or unreachable**,
+rather than succeeding and producing a deployment that errors on every request. That is the intended
+trade — a missing `DATABASE_URL` is the single most common cause of a failed first deploy.
 
 ### Reading an error reference
 
