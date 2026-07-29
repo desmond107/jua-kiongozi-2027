@@ -64,6 +64,17 @@ export const RATE_LIMITS = {
   /** Voting: 7 candidates exist, so 30/hour leaves ample room for revisions. */
   voteByIp: { limit: 30 * RELAX, windowSeconds: 60 * 60 },
   voteByUser: { limit: 20 * RELAX, windowSeconds: 60 * 60 },
+  /**
+   * Operator sign-in. Far tighter than citizen sign-in, because the two are not
+   * comparable prizes: guessing a citizen's token exposes one ballot, guessing
+   * an operator's password exposes the registrant list for the whole platform.
+   *
+   * Keyed by username as well as IP so that distributing an attack across
+   * addresses — the standard way around an IP-only limit — still runs into a
+   * ceiling on the account being attacked.
+   */
+  adminLoginByIp: { limit: 5 * RELAX, windowSeconds: 60 * 15 },
+  adminLoginByUsername: { limit: 10 * RELAX, windowSeconds: 60 * 15 },
 } as const satisfies Record<string, RateLimitRule>
 
 /**

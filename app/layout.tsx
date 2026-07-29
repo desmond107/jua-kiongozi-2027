@@ -3,6 +3,7 @@ import { Fraunces, Inter } from 'next/font/google'
 import { getSession } from '@/backend/services/session.service'
 import { Navbar } from '@/frontend/components/layout/navbar'
 import { Footer } from '@/frontend/components/layout/footer'
+import { PublicChrome } from '@/frontend/components/layout/public-chrome'
 import './globals.css'
 
 /**
@@ -70,11 +71,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </a>
 
         <div className="flex min-h-screen flex-col">
-          <Navbar signedIn={Boolean(session)} />
+          <PublicChrome>
+            <Navbar signedIn={Boolean(session)} />
+          </PublicChrome>
           <main id="main" className="flex-1">
             {children}
           </main>
-          <Footer />
+          <PublicChrome>
+            <Footer />
+          </PublicChrome>
         </div>
       </body>
     </html>

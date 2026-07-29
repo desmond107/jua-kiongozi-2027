@@ -78,3 +78,19 @@ export const env = {
 export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30
 
 export const SESSION_COOKIE_NAME = 'jk27_session'
+
+/**
+ * Admin sessions expire in 8 hours, not 30 days.
+ *
+ * A citizen's session unlocks their own ballot; an operator's unlocks the
+ * registrant list for the entire platform. A month-long cookie on a shared or
+ * borrowed machine is an acceptable risk for the first and not for the second,
+ * so this is scoped to roughly one working day.
+ */
+export const ADMIN_SESSION_MAX_AGE_SECONDS = 60 * 60 * 8
+
+/**
+ * A distinct cookie name from the voter session, so the two never overwrite
+ * each other and signing out of one does not silently sign out of the other.
+ */
+export const ADMIN_SESSION_COOKIE_NAME = 'jk27_admin'

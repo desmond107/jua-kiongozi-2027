@@ -5,6 +5,8 @@ import type { BallotReceipt } from '@/backend/services/vote.service'
 import type { CandidateSummary } from '@/backend/services/candidate.service'
 import type { AnalyticsSnapshot } from '@/backend/validators'
 import type {
+  AdminLoginPayload,
+  ExportDataset,
   LoginInput,
   LoginWithIdInput,
   RegisterInput,
@@ -157,6 +159,35 @@ export const api = {
   analytics(): Promise<AnalyticsSnapshot> {
     return request<AnalyticsSnapshot>('/api/analytics')
   },
+
+  /** Operator sign-in. Sets a separate cookie from the citizen session. */
+  adminLogin(input: AdminLoginPayload): Promise<{ username: string }> {
+    return request<{ username: string }>('/api/admin/login', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    })
+  },
+
+  adminSignOut(): Promise<{ signedOut: boolean }> {
+    return request<{ signedOut: boolean }>('/api/admin/logout', { method: 'POST' })
+  },
 }
 
 export const CSV_EXPORT_URL = '/api/analytics?format=csv'
+
+/**
+ * Builds an operator export URL.
+ *
+ * A plain link rather than a fetch: the browser's own download handling deals
+ * with Content-Disposition, progress and large files far better than reading a
+ * blob into memory would, and the session cookie rides along automatically.
+ */
+export function adminExportUrl(
+  dataset: ExportDataset,
+  format: 'csv' | 'xlsx',
+  county?: string,
+): string {
+  const params = new URLSearchParams({ dataset, format })
+  if (county) params.set('county', county)
+  return `/api/admin/export?${params.toString()}`
+}

@@ -15,6 +15,7 @@ candidate, and view fully public real-time results.
 ## Table of contents
 
 - [Quick start](#quick-start)
+- [Operator console](#operator-console)
 - [Environment variables](#environment-variables)
 - [Deploying to Vercel](#deploying-to-vercel)
 - [Architecture](#architecture)
@@ -72,6 +73,65 @@ createdb jua_kiongozi_2027
 | `npm run db:seed` | Seed or refresh the seven candidates (idempotent) |
 | `npm run db:studio` | Prisma Studio |
 | `npm run db:reset` | **Drops all data**, re-migrates, re-seeds |
+| `npm run admin:create` | Create or rotate an operator for the `/admin` console |
+
+---
+
+## Operator console
+
+A restricted console at `/admin`, reached from the small dot at the left of the
+footer. Sign-in is at `/admin/login`.
+
+```bash
+ADMIN_USERNAME=oneterm ADMIN_PASSWORD='<password>' npm run admin:create
+```
+
+Re-running with the same username rotates that operator's password. There is no
+self-service signup, no password-reset link and no emailed recovery — rotation
+is out-of-band on purpose, so the console is not only as strong as an inbox.
+
+### What it shows
+
+| Page | Contents |
+|---|---|
+| Overview | Platform totals, participation, a 30-day registration timeline |
+| Counties | Registrations, activity and per-candidate sentiment for all 47 counties |
+| Registrants | Name, county, masked phone, masked ID, registration date, ratings cast |
+
+Every table exports to **CSV** and **Excel** (`.xlsx`). The summary workbook has
+a second sheet that CSV cannot carry, which the UI says next to the button.
+
+### What it deliberately does not show
+
+**Individual voting choices.** No page, no endpoint and no export pairs a person
+with how they rated anyone. The counts are how many candidates someone rated,
+never which way. This is the promise the privacy policy makes to every
+registrant, and under the Data Protection Act 2019 a political opinion attached
+to a named citizen is sensitive personal data — so it is enforced in
+`admin.repository.ts` with narrow `select` clauses and asserted in
+`tests/integration/admin.test.ts`, not left to convention.
+
+**Full phone numbers and national ID numbers.** These are not withheld, they do
+not exist: registration HMAC-hashes both, so `***678` is the entire stored
+record. No permission level in this console can reveal more, and neither can
+anyone holding a copy of the database.
+
+### How it is actually protected
+
+The footer dot is a convenience, not a control — `/admin/login` is a normal URL
+and the route is reachable typed by hand. The protection is:
+
+- a bcrypt (cost 12) password, checked with a uniform error and a constant-time
+  decoy comparison so unknown usernames cannot be enumerated by timing
+- a session cookie separate from the citizen one, on its own JWT **audience** —
+  without which a citizen's validly-signed session could be replayed as an
+  operator's, since both are signed with the same `JWT_SECRET`
+- `HttpOnly; Secure; SameSite=Strict`, expiring in 8 hours rather than 30 days
+- a session check in `app/admin/(console)/layout.tsx` *and* an independent one
+  on every admin API route, because a layout guard protects pages, not endpoints
+- rate limits keyed by IP **and** by username, so distributing an attack across
+  addresses still meets a ceiling on the account being attacked
+- `noindex` on the area and `X-Robots-Tag` plus `no-store` on every download
 
 ---
 

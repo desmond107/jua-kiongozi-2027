@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Emblem } from './emblem'
+import { AdminEntry } from './admin-entry'
 import { DATA_DISCLAIMER, IEBC_DISCLAIMER, TOKEN_DISCLAIMER } from './disclaimers'
 
 const COLUMNS = [
@@ -82,10 +83,13 @@ export function Footer() {
           <p>{TOKEN_DISCLAIMER}</p>
         </div>
 
-        <p className="mt-8 text-xs text-bone-dim">
-          © {new Date().getFullYear()} Jua Kiongozi ’27. Aggregate results are published openly for
-          public audit.
-        </p>
+        <div className="mt-8 flex items-center gap-4">
+          <AdminEntry />
+          <p className="text-xs text-bone-dim">
+            © {new Date().getFullYear()} Jua Kiongozi ’27. Aggregate results are published openly
+            for public audit.
+          </p>
+        </div>
       </div>
     </footer>
   )

@@ -175,19 +175,19 @@ model Flag {
 /// `codeHash` is persisted, so a database dump does not let an attacker complete
 /// a pending registration.
 model PhoneVerification {
-  id        String    @id @default(cuid())
+  id         String    @id @default(cuid())
   // Same peppered hash as User.phoneHash, so a raw number is never written here
   // either. Not unique: a citizen may legitimately request a second code.
-  phoneHash String
-  codeHash  String
+  phoneHash  String
+  codeHash   String
   // Wrong guesses against this challenge. Capped so a 6-digit code cannot be
   // walked through in a few thousand requests.
-  attempts  Int       @default(0)
-  expiresAt DateTime
+  attempts   Int       @default(0)
+  expiresAt  DateTime
   // Set the moment the code is accepted. A consumed challenge is dead: it can
   // never authorise a second registration.
   consumedAt DateTime?
-  createdAt DateTime  @default(now())
+  createdAt  DateTime  @default(now())
 
   @@index([phoneHash, createdAt])
   @@index([expiresAt])
@@ -207,6 +207,29 @@ model RateLimit {
 
   @@index([windowStart])
   @@map("rate_limits")
+}
+
+/// A platform operator. Deliberately a separate table from `User` rather than a
+/// role column on it, for two reasons:
+///
+///   1. An operator is not a voter. Putting a role on `User` would mean an
+///      account that can both administer the platform and cast ratings on it,
+///      which is exactly the conflict a public sentiment platform cannot have.
+///   2. `User` rows are keyed by hashed national ID and phone, and are subject
+///      to the erasure promises in the privacy policy. Operator credentials are
+///      neither, and mixing the two lifecycles invites deleting the wrong one.
+///
+/// There is no self-service creation path: rows are inserted by `npm run
+/// admin:create`, which reads credentials from the environment.
+model Admin {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  /// bcrypt, cost 12. Never the password itself, and never reversible.
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  lastLoginAt  DateTime?
+
+  @@map("admins")
 }
 
 enum VoteChoice {
