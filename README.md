@@ -99,6 +99,25 @@ citizen's phone, and that gate is the only thing making a fake account cost anyt
 provider configured the app refuses to issue codes rather than waving registrations through.
 Unset (or `console`) is a development-only mode that prints the code to the server log.
 
+### "Too many codes requested from this connection"
+
+If you hit this while developing, clear the buckets:
+
+```bash
+npm run db:reset-limits
+```
+
+Rate limits are also relaxed 20× outside production, and the SMS resend cooldown drops from 60s to
+2s, so the registration flow can be exercised repeatedly. Production ceilings are untouched — the
+same code path runs either way, only the numbers differ.
+
+**If real users see this in production, it is a misconfiguration, not load.** IP-keyed limits need
+to be able to tell one client from another. Where they cannot — no `request.ip`, no
+`TRUSTED_PROXY_HOPS` — the IP layer is skipped entirely and a one-off warning is logged, because a
+shared bucket would mean the first ten visitors lock out everyone else for an hour. Per-phone and
+per-user limits still apply and are the ones that actually constrain abuse. Set
+`TRUSTED_PROXY_HOPS` to restore the IP layer.
+
 **`TRUSTED_PROXY_HOPS` must match your topology.** Rate limiting reads the client IP that many
 entries from the *right* of `X-Forwarded-For`, because that header is append-only and everything
 further left was supplied by the caller. Leave it unset on Vercel, which supplies a trustworthy IP
@@ -293,6 +312,33 @@ database still cannot brute-force the ~8-digit Kenyan ID space, because the key 
 - **CSV injection is neutralised** — cells beginning `=`, `+`, `-` or `@` are prefixed before export.
 
 ---
+
+### Signing back in
+
+Two routes, both keyed to the registered phone number:
+
+| Route | Credentials | SMS code |
+|---|---|---|
+| Voting token | phone + token | no |
+| National ID | phone + ID number + code | **yes** |
+
+The ID route exists because losing the token used to mean permanent lockout — signing in required
+the token, and retrieving the token required a session, so the loop had no entrance.
+
+**Why it demands a code when the token route does not.** A voting token is 160 bits of secret that
+exists only on the citizen's own copy, so presenting it is proof in itself. A Kenyan national ID
+number is the opposite: 7–9 digits, routinely photocopied by employers, landlords, banks and
+building security. Accepting "phone + ID" alone would let anyone holding a photocopy open a session
+and read which candidates that person had rated — precisely the political disclosure the rest of the
+design exists to prevent. The code proves control of the SIM; neither factor is sufficient alone.
+
+**The code is spent even when the ID is wrong.** Otherwise one SMS would fund unlimited ID guesses
+against a handset. Burning it per attempt means each guess costs a message, which the per-phone OTP
+limit caps at a handful an hour.
+
+Neither route grants voting authority. A session is not a ballot: every rating must present the raw
+token separately, so an ID sign-in lets a citizen see their own status and retrieve their token —
+never cast anything in someone else's name.
 
 ## Hero videos
 

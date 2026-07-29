@@ -6,6 +6,7 @@ import type { CandidateSummary } from '@/backend/services/candidate.service'
 import type { AnalyticsSnapshot } from '@/backend/validators'
 import type {
   LoginInput,
+  LoginWithIdInput,
   RegisterInput,
   RequestOtpInput,
   RevealTokenInput,
@@ -99,10 +100,19 @@ export const api = {
     })
   },
 
+  /** Sign in with the voting token. */
   login(input: LoginInput): Promise<LoginResult> {
     return request<LoginResult>('/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify(input),
+      body: JSON.stringify({ ...input, method: 'token' }),
+    })
+  },
+
+  /** Sign in with the national ID number plus an SMS code. */
+  loginWithId(input: LoginWithIdInput): Promise<LoginResult> {
+    return request<LoginResult>('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ ...input, method: 'id' }),
     })
   },
 

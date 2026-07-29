@@ -5,7 +5,7 @@ import { getSession } from '@/backend/services/session.service'
 import { submitBallot, submitVote } from '@/backend/services/vote.service'
 import { submitBallotSchema, submitVoteSchema } from '@/backend/validators'
 import { ApiError, handle, ok } from '@/backend/utils/http.util'
-import { RATE_LIMITS, clientIp, consumeRateLimit } from '@/backend/utils/rateLimiter.util'
+import { RATE_LIMITS, consumeIpRateLimit, consumeRateLimit } from '@/backend/utils/rateLimiter.util'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,8 +26,7 @@ export async function POST(request: NextRequest) {
       throw ApiError.unauthorized('Please sign in with your voter card before rating a candidate.')
     }
 
-    const ip = clientIp(request)
-    const byIp = await consumeRateLimit(`vote:ip:${ip}`, RATE_LIMITS.voteByIp)
+    const byIp = await consumeIpRateLimit(request, 'vote:ip', RATE_LIMITS.voteByIp)
     if (!byIp.allowed) {
       throw ApiError.tooManyRequests(
         'Too many submissions from this connection. Please try again shortly.',

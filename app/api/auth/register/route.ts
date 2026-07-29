@@ -5,7 +5,7 @@ import { registerSchema } from '@/backend/validators'
 import { ApiError, handle, ok, parseBody } from '@/backend/utils/http.util'
 import {
   RATE_LIMITS,
-  clientIp,
+  consumeIpRateLimit,
   consumeRateLimit,
 } from '@/backend/utils/rateLimiter.util'
 import { hashPhoneNumber, normalisePhoneNumber } from '@/backend/utils/crypto.util'
@@ -28,10 +28,9 @@ export async function POST(request: NextRequest) {
     // Two independent buckets: one per IP (blocks a single machine farming
     // accounts) and one per phone number (blocks the same number being retried
     // across many IPs).
-    const ip = clientIp(request)
     const phoneKey = hashPhoneNumber(normalisePhoneNumber(payload.phoneNumber)).slice(0, 32)
 
-    const byIp = await consumeRateLimit(`register:ip:${ip}`, RATE_LIMITS.registerByIp)
+    const byIp = await consumeIpRateLimit(request, 'register:ip', RATE_LIMITS.registerByIp)
     if (!byIp.allowed) {
       throw ApiError.tooManyRequests(
         'Too many registration attempts from this connection. Please try again later.',

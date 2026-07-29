@@ -4,7 +4,7 @@ import { verifyToken } from '@/backend/services/token.service'
 import { tokenRepository } from '@/backend/repositories/token.repository'
 import { verifyTokenSchema } from '@/backend/validators'
 import { ApiError, handle, ok, parseBody } from '@/backend/utils/http.util'
-import { RATE_LIMITS, clientIp, consumeRateLimit } from '@/backend/utils/rateLimiter.util'
+import { RATE_LIMITS, consumeIpRateLimit } from '@/backend/utils/rateLimiter.util'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,8 +23,7 @@ export async function POST(request: NextRequest) {
     const session = await getSession()
     if (!session) throw ApiError.unauthorized()
 
-    const ip = clientIp(request)
-    const limit = await consumeRateLimit(`verify:ip:${ip}`, RATE_LIMITS.loginByIp)
+    const limit = await consumeIpRateLimit(request, 'verify:ip', RATE_LIMITS.loginByIp)
     if (!limit.allowed) {
       throw ApiError.tooManyRequests(
         'Too many verification attempts. Please wait a few minutes.',

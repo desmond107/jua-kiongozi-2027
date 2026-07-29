@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '@/backend/db/client'
 import { userRepository } from '@/backend/repositories/user.repository'
 import { tokenRepository } from '@/backend/repositories/token.repository'
-import type { LoginPayload, RegisterPayload } from '@/backend/validators'
+import type { LoginPayload, LoginWithIdPayload, RegisterPayload } from '@/backend/validators'
 import {
   hashIdNumber,
   hashPhoneNumber,
@@ -159,6 +159,57 @@ export async function login(payload: LoginPayload): Promise<LoginResult> {
   // Same status and message as any other failure: a distinct "revoked" response
   // would confirm to a prober that this phone/token pair is real.
   if (token.revokedAt) throw invalid
+
+  return {
+    userId: user.id,
+    name: user.name,
+    serial: publicSerial(user.id),
+    phoneMasked: user.phoneMasked,
+    county: user.county,
+  }
+}
+
+/**
+ * Signs in with a national ID number and an SMS code, for a citizen who no
+ * longer has their voting token.
+ *
+ * This exists because losing the token used to mean permanent lockout: signing
+ * in required the token, and retrieving the token required being signed in.
+ * That loop had no entrance. This is the entrance — and note what it does NOT
+ * grant. A session is not voting authority: every rating still has to present
+ * the raw token, so someone who gets in this way can see their own status and
+ * use the SMS-verified reveal flow, but cannot cast anything in another
+ * citizen's name.
+ *
+ * THE CODE IS SPENT WHETHER OR NOT THE ID MATCHES
+ * ───────────────────────────────────────────────
+ * Deliberate. If a wrong ID left the code usable, someone holding the handset
+ * could sit and guess ID numbers against a single SMS. Burning the code on
+ * every attempt means each guess costs one message, which the per-phone OTP
+ * limit then caps at a handful an hour.
+ */
+export async function loginWithIdNumber(payload: LoginWithIdPayload): Promise<LoginResult> {
+  const phone = normalisePhoneNumber(payload.phoneNumber)
+
+  // Proof of SIM control comes first, before any lookup that could reveal
+  // whether this number is registered.
+  const challengeId = await assertPhoneVerified(phone, payload.otpCode)
+  await consumeVerifiedChallenge(challengeId)
+
+  const user = await userRepository.findByPhoneHash(hashPhoneNumber(phone))
+
+  // Uniform for "no such account" and "wrong ID", so a caller who holds the SIM
+  // still cannot use this endpoint to test whether a given ID is registered.
+  const invalid = ApiError.unauthorized(
+    'Those details do not match a registered voter. Check your ID number and try again.',
+  )
+
+  // Computed unconditionally: returning early on an unknown phone would make
+  // that case measurably faster and reintroduce the oracle.
+  const submittedIdHash = hashIdNumber(payload.idNumber)
+
+  if (!user) throw invalid
+  if (!hashesMatch(user.idNumberHash, submittedIdHash)) throw invalid
 
   return {
     userId: user.id,

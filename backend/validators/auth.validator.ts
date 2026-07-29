@@ -112,6 +112,42 @@ export const loginSchema = z.object({
   token: votingTokenSchema,
 })
 
+/**
+ * Signing in with a national ID number instead of the voting token.
+ *
+ * WHY THIS DEMANDS AN SMS CODE AND THE TOKEN PATH DOES NOT
+ * ────────────────────────────────────────────────────────
+ * A voting token is 160 bits of secret that exists nowhere but the citizen's
+ * own copy, so presenting it is itself proof of identity.
+ *
+ * A Kenyan national ID number is the opposite. It is 7–9 digits, and it is
+ * routinely photocopied by employers, landlords, banks, M-Pesa agents and
+ * building security. Treating "phone number + ID number" as sufficient would
+ * mean anyone holding a photocopy — or a relative, or a former employer — could
+ * open a session in that citizen's name and read which candidates they had
+ * rated. On a platform recording political sentiment, that is exactly the
+ * disclosure the whole design exists to prevent.
+ *
+ * So this route additionally requires a live SMS code, which proves control of
+ * the registered SIM. Neither factor is strong alone: the ID is not secret, and
+ * a SIM can be swapped. Requiring both means an attacker needs the number, the
+ * ID, AND the handset.
+ */
+export const loginWithIdSchema = z.object({
+  phoneNumber: phoneNumberSchema,
+  idNumber: idNumberSchema,
+  otpCode: otpCodeSchema,
+})
+
+/**
+ * Either sign-in route, discriminated so the handler cannot confuse them and a
+ * client cannot accidentally submit half of each.
+ */
+export const loginRequestSchema = z.discriminatedUnion('method', [
+  loginSchema.extend({ method: z.literal('token') }),
+  loginWithIdSchema.extend({ method: z.literal('id') }),
+])
+
 export const verifyTokenSchema = z.object({
   token: votingTokenSchema,
 })
@@ -128,6 +164,9 @@ export const revealTokenSchema = z.object({
 
 export type RegisterInput = z.input<typeof registerSchema>
 export type RegisterPayload = z.output<typeof registerSchema>
+export type LoginWithIdInput = z.input<typeof loginWithIdSchema>
+export type LoginWithIdPayload = z.output<typeof loginWithIdSchema>
+export type LoginRequestInput = z.input<typeof loginRequestSchema>
 export type LoginInput = z.input<typeof loginSchema>
 export type LoginPayload = z.output<typeof loginSchema>
 export type VerifyTokenPayload = z.output<typeof verifyTokenSchema>

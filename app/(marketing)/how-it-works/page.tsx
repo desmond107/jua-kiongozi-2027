@@ -24,7 +24,7 @@ const STEPS = [
   {
     step: '03',
     title: 'You see it once, and can retrieve it later',
-    body: 'The token is displayed on your Voter Card at registration. You can retrieve it again afterwards, but only by proving control of the phone number the account was registered with — you must supply that number and a fresh code sent to it. A session alone is never enough, so a borrowed or stolen laptop does not hand over your vote.',
+    body: 'The token is displayed on your Voter Card at registration. You can retrieve it again afterwards, but only by proving control of the phone number the account was registered with — you must supply that number and a fresh code sent to it. A session alone is never enough, so a borrowed or stolen laptop does not hand over your vote. If you have lost the token entirely, sign in with your national ID number and a code instead, then retrieve it from your Voter Card.',
   },
   {
     step: '04',

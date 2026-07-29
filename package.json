@@ -18,7 +18,8 @@
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "db:reset-limits": "tsx scripts/reset-rate-limits.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

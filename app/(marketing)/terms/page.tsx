@@ -19,7 +19,7 @@ const TERMS = [
   },
   {
     title: 'Your voting token',
-    body: 'Your token is issued once, at registration. You are responsible for keeping it confidential — anyone who obtains it can cast ratings in your name. While you remain signed in, you may retrieve it from your Voter Card page by verifying your registered phone number again. We will not reissue a token to anyone who cannot receive that verification code, and if you are signed out and no longer hold your token, we cannot restore access to your account.',
+    body: 'Your token is issued once, at registration. You are responsible for keeping it confidential — anyone who obtains it can cast ratings in your name. While you remain signed in, you may retrieve it from your Voter Card page by verifying your registered phone number again. We will not reissue a token to anyone who cannot receive that verification code, and if you no longer hold your token, you may sign in with the national ID number you registered with plus a code sent to that same phone, and retrieve the token from your Voter Card.',
   },
   {
     title: 'One rating per candidate',

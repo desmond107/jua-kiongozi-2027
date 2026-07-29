@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server'
 import { requestPhoneVerification } from '@/backend/services/otp.service'
 import { requestOtpSchema } from '@/backend/validators'
 import { ApiError, handle, ok, parseBody } from '@/backend/utils/http.util'
-import { RATE_LIMITS, clientIp, consumeRateLimit } from '@/backend/utils/rateLimiter.util'
+import { RATE_LIMITS, consumeIpRateLimit, consumeRateLimit } from '@/backend/utils/rateLimiter.util'
 import { SmsDeliveryError } from '@/backend/utils/sms.util'
 import { hashPhoneNumber, normalisePhoneNumber } from '@/backend/utils/crypto.util'
 
@@ -22,10 +22,9 @@ export async function POST(request: NextRequest) {
   return handle(async () => {
     const payload = await parseBody(request, requestOtpSchema)
 
-    const ip = clientIp(request)
     const phoneKey = hashPhoneNumber(normalisePhoneNumber(payload.phoneNumber)).slice(0, 32)
 
-    const byIp = await consumeRateLimit(`otp:ip:${ip}`, RATE_LIMITS.otpByIp)
+    const byIp = await consumeIpRateLimit(request, 'otp:ip', RATE_LIMITS.otpByIp)
     if (!byIp.allowed) {
       throw ApiError.tooManyRequests(
         'Too many codes requested from this connection. Please try again later.',

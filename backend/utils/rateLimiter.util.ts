@@ -27,31 +27,43 @@ export type RateLimitResult = {
   retryAfter: number
 }
 
+/**
+ * Production limits are tuned for citizens: a real person registers once and
+ * asks for maybe two codes. A developer exercising the same flow burns through
+ * that in minutes, and then cannot test at all for an hour — which is the
+ * failure that prompted this change.
+ *
+ * The multiplier applies ONLY outside production, and only to the ceilings.
+ * Every rule, key and window stays identical, so what is exercised in
+ * development is the same code path that runs in production.
+ */
+const RELAX = process.env.NODE_ENV === 'production' ? 1 : 20
+
 export const RATE_LIMITS = {
   /**
    * Verification codes cost real money to send, so this bucket protects the SMS
    * bill as much as the platform. Per-phone is the tighter of the two because
    * an attacker rotating numbers is the expensive case.
    */
-  otpByIp: { limit: 10, windowSeconds: 60 * 60 },
-  otpByPhone: { limit: 5, windowSeconds: 60 * 60 },
+  otpByIp: { limit: 10 * RELAX, windowSeconds: 60 * 60 },
+  otpByPhone: { limit: 5 * RELAX, windowSeconds: 60 * 60 },
   /** Registration is the most abuse-prone endpoint: 5 attempts per IP per hour. */
-  registerByIp: { limit: 5, windowSeconds: 60 * 60 },
+  registerByIp: { limit: 5 * RELAX, windowSeconds: 60 * 60 },
   /** One phone number should only ever need a single successful registration. */
-  registerByPhone: { limit: 3, windowSeconds: 60 * 60 * 24 },
+  registerByPhone: { limit: 3 * RELAX, windowSeconds: 60 * 60 * 24 },
   /** Login: 10 attempts per IP per 15 minutes. */
-  loginByIp: { limit: 10, windowSeconds: 60 * 15 },
-  loginByPhone: { limit: 8, windowSeconds: 60 * 15 },
+  loginByIp: { limit: 10 * RELAX, windowSeconds: 60 * 15 },
+  loginByPhone: { limit: 8 * RELAX, windowSeconds: 60 * 15 },
   /**
    * Retrieving your own token. Tight on purpose: a legitimate citizen does this
    * rarely, and each attempt is a chance to brute-force a code against a session
    * that may not belong to the person holding it.
    */
-  revealByIp: { limit: 10, windowSeconds: 60 * 60 },
-  revealByUser: { limit: 5, windowSeconds: 60 * 60 },
+  revealByIp: { limit: 10 * RELAX, windowSeconds: 60 * 60 },
+  revealByUser: { limit: 5 * RELAX, windowSeconds: 60 * 60 },
   /** Voting: 7 candidates exist, so 30/hour leaves ample room for revisions. */
-  voteByIp: { limit: 30, windowSeconds: 60 * 60 },
-  voteByUser: { limit: 20, windowSeconds: 60 * 60 },
+  voteByIp: { limit: 30 * RELAX, windowSeconds: 60 * 60 },
+  voteByUser: { limit: 20 * RELAX, windowSeconds: 60 * 60 },
 } as const satisfies Record<string, RateLimitRule>
 
 /**
@@ -117,6 +129,24 @@ export async function consumeRateLimit(
 }
 
 /**
+ * Whether this process can actually tell one client from another.
+ *
+ * When it cannot, IP-keyed limiting is not merely weak — it is actively
+ * harmful, because every visitor lands in ONE bucket and the first ten of them
+ * lock out the rest. `ipLimitingAvailable()` lets callers skip the IP layer in
+ * that state rather than apply a control that punishes the innocent.
+ */
+export function ipLimitingAvailable(request: NextRequest): boolean {
+  if (request.ip) return true
+
+  const hops = Number(process.env.TRUSTED_PROXY_HOPS ?? '')
+  return Number.isInteger(hops) && hops > 0
+}
+
+/** Logged once per process, not per request — this would otherwise flood. */
+let warnedAboutClientIp = false
+
+/**
  * Client IP, derived only from sources the caller cannot forge.
  *
  * WHY NOT THE LEFT-MOST x-forwarded-for ENTRY
@@ -161,7 +191,54 @@ export function clientIp(request: NextRequest): string {
     }
   }
 
-  return 'untrusted-origin'
+  /*
+   * Nothing trustworthy identifies this client.
+   *
+   * This used to return a single constant, which put EVERY visitor in the same
+   * bucket: ten code requests from anyone, anywhere, locked out the entire
+   * platform for an hour. That is a self-inflicted outage, and it is the exact
+   * failure that brought us here — a developer testing registration exhausted
+   * the global OTP allowance in a few minutes.
+   *
+   * Callers now check `ipLimitingAvailable()` and skip the IP layer instead, so
+   * this value is only ever a label. The per-phone and per-user buckets — keyed
+   * on values a caller cannot rotate freely — remain in force either way, and
+   * they are the ones that actually bite.
+   */
+
+  return 'unidentified-client'
+}
+
+/**
+ * Applies an IP-keyed limit, but only when the client can be told apart from
+ * every other client.
+ *
+ * When it cannot, the limit is skipped rather than shared. A control that
+ * cannot distinguish attacker from citizen does not protect the citizen — it
+ * locks them out alongside the attacker, which is worse than not having it.
+ * The per-phone and per-user buckets are unaffected and still apply.
+ */
+export async function consumeIpRateLimit(
+  request: NextRequest,
+  prefix: string,
+  rule: RateLimitRule,
+): Promise<RateLimitResult> {
+  if (!ipLimitingAvailable(request)) {
+    // Once per process, not per request — otherwise this floods the log.
+    if (!warnedAboutClientIp) {
+      warnedAboutClientIp = true
+      console.warn(
+        '[rateLimiter] No trustworthy client IP available, so IP-keyed limits are ' +
+          'INACTIVE. On Vercel this resolves itself; behind any other proxy set ' +
+          'TRUSTED_PROXY_HOPS to the number of proxies in front of this app. ' +
+          'Per-phone and per-user limits are unaffected.',
+      )
+    }
+
+    return { allowed: true, remaining: rule.limit, retryAfter: 0 }
+  }
+
+  return consumeRateLimit(`${prefix}:${clientIp(request)}`, rule)
 }
 
 /** Removes rate-limit rows whose windows expired long ago. Safe to call in cron. */

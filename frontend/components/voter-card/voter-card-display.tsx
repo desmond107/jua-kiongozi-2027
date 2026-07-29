@@ -96,8 +96,10 @@ export function VoterCardDisplay({
       '',
       '-'.repeat(46),
       'Treat this token like a password. Anyone holding it can cast',
-      'ratings in your name. Keep this file somewhere private — if you lose it and',
-      'are signed out everywhere, you cannot get back into your account.',
+      'ratings in your name. Keep this file somewhere private.',
+      '',
+      'If you lose this token you can still sign in with your national ID',
+      'number and a code sent to this phone, then retrieve it again.',
       '',
       'Jua Kiongozi ’27 is an independent civic-engagement platform.',
       'It is not affiliated with, endorsed by, or a substitute for the',
@@ -208,7 +210,8 @@ export function VoterCardDisplay({
               <p className="text-xs leading-relaxed text-bone-dim">
                 Keep it as private as a password — anyone holding it can rate candidates in your
                 name. You can retrieve it later from this page while you are signed in, by
-                verifying your phone again. If you sign out and lose it, you cannot get back in.
+                verifying your phone again. If you lose it entirely, sign in with your national ID
+                number instead and retrieve it from here.
               </p>
             </div>
           </div>

@@ -3,7 +3,7 @@ import { getSession } from '@/backend/services/session.service'
 import { revealToken } from '@/backend/services/token.service'
 import { revealTokenSchema } from '@/backend/validators'
 import { ApiError, handle, ok, parseBody } from '@/backend/utils/http.util'
-import { RATE_LIMITS, clientIp, consumeRateLimit } from '@/backend/utils/rateLimiter.util'
+import { RATE_LIMITS, consumeIpRateLimit, consumeRateLimit } from '@/backend/utils/rateLimiter.util'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,9 +27,8 @@ export async function POST(request: NextRequest) {
       throw ApiError.unauthorized('Please sign in before retrieving your voting token.')
     }
 
-    const ip = clientIp(request)
 
-    const byIp = await consumeRateLimit(`reveal:ip:${ip}`, RATE_LIMITS.revealByIp)
+    const byIp = await consumeIpRateLimit(request, 'reveal:ip', RATE_LIMITS.revealByIp)
     if (!byIp.allowed) {
       throw ApiError.tooManyRequests(
         'Too many attempts from this connection. Please wait a few minutes.',

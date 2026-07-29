@@ -5,7 +5,7 @@ import { getSession } from '@/backend/services/session.service'
 import { submitFlag } from '@/backend/services/flag.service'
 import { submitFlagSchema } from '@/backend/validators'
 import { ApiError, handle, ok, parseBody } from '@/backend/utils/http.util'
-import { RATE_LIMITS, clientIp, consumeRateLimit } from '@/backend/utils/rateLimiter.util'
+import { RATE_LIMITS, consumeIpRateLimit } from '@/backend/utils/rateLimiter.util'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,8 +23,7 @@ export async function POST(request: NextRequest) {
       throw ApiError.unauthorized('Please sign in with your voter card before flagging a candidate.')
     }
 
-    const ip = clientIp(request)
-    const byIp = await consumeRateLimit(`flag:ip:${ip}`, RATE_LIMITS.voteByIp)
+    const byIp = await consumeIpRateLimit(request, 'flag:ip', RATE_LIMITS.voteByIp)
     if (!byIp.allowed) {
       throw ApiError.tooManyRequests(
         'Too many submissions from this connection. Please try again shortly.',

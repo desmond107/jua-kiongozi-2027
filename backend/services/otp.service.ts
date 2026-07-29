@@ -35,8 +35,15 @@ const CODE_TTL_SECONDS = 10 * 60
 /** Wrong guesses permitted per challenge before it is dead. */
 export const MAX_OTP_ATTEMPTS = 5
 
-/** Minimum gap between code requests for one number, in seconds. */
-const RESEND_COOLDOWN_SECONDS = 60
+/**
+ * Minimum gap between code requests for one number, in seconds.
+ *
+ * Relaxed outside production. In production this protects the SMS bill and
+ * stops a number being used to spam someone; in development nothing is sent —
+ * the code goes to the server log — so the only thing the cooldown achieves is
+ * making the registration flow take a minute per attempt to exercise.
+ */
+const RESEND_COOLDOWN_SECONDS = process.env.NODE_ENV === 'production' ? 60 : 2
 
 export type OtpChallenge = {
   /** Masked for display: "a code was sent to ***456". */

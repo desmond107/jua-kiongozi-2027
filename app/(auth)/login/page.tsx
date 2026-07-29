@@ -7,7 +7,7 @@ import { PageContainer } from '@/frontend/components/ui/primitives'
 export const metadata: Metadata = {
   title: 'Sign in',
   description:
-    'Sign in with your phone number and voting token to check your voting status and continue rating candidates.',
+    'Sign in with your voting token, or with your national ID number and a verification code if you have lost it.',
 }
 
 export const dynamic = 'force-dynamic'
@@ -22,7 +22,7 @@ export default async function LoginPage() {
         <header className="space-y-3 text-center">
           <h1 className="text-display-sm font-semibold text-bone">Sign in</h1>
           <p className="text-base leading-relaxed text-bone-muted">
-            Use the phone number you registered with and the token from your Voter Card.
+            Use your voting token, or your national ID number if you no longer have it.
           </p>
         </header>
 
