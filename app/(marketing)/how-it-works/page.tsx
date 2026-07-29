@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { FLAG_COLOR_ORDER, FLAG_META, VOTE_CHOICE_META, VOTE_CHOICE_ORDER } from '@/backend/validators'
 import { Button } from '@/frontend/components/ui/button'
 import { PageContainer, SectionHeading } from '@/frontend/components/ui/primitives'
+import { FlagIcon } from '@/frontend/components/ui/flag-icon'
 
 export const metadata: Metadata = {
   title: 'How it works',
@@ -99,11 +100,7 @@ export default function HowItWorksPage() {
             <ul className="space-y-2.5">
               {FLAG_COLOR_ORDER.map((color) => (
                 <li key={color} className="flex items-start gap-3 text-sm">
-                  <span
-                    className="mt-1 h-3 w-3 shrink-0 rounded-full ring-2 ring-white/15"
-                    style={{ backgroundColor: FLAG_META[color].hex }}
-                    aria-hidden
-                  />
+                  <FlagIcon color={color} className="mt-0.5 h-5 w-5" />
                   <span className="text-bone-dim">
                     <strong className="font-semibold text-bone">
                       {FLAG_META[color].label} flag

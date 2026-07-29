@@ -3,6 +3,7 @@ import { listCandidates } from '@/backend/services/candidate.service'
 import { getSession } from '@/backend/services/session.service'
 import { spentCandidatesForUser } from '@/backend/services/token.service'
 import { CandidateGrid } from '@/frontend/components/candidates/candidate-grid'
+import { FlagIcon } from '@/frontend/components/ui/flag-icon'
 import { FlagBar } from '@/frontend/components/candidates/flag-bar'
 import { PageContainer, SectionHeading } from '@/frontend/components/ui/primitives'
 import { FLAG_COLOR_ORDER, FLAG_META } from '@/backend/validators'
@@ -39,12 +40,8 @@ export default async function CandidatesPage() {
           Trust flags
         </span>
         {FLAG_COLOR_ORDER.map((color) => (
-          <span key={color} className="flex items-center gap-2 text-xs text-bone-muted">
-            <span
-              className="h-2.5 w-2.5 rounded-full"
-              style={{ backgroundColor: FLAG_META[color].hex }}
-              aria-hidden
-            />
+          <span key={color} className="flex items-center gap-1.5 text-xs text-bone-muted">
+            <FlagIcon color={color} className="h-4 w-4" />
             {FLAG_META[color].label}
           </span>
         ))}

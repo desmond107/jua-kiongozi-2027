@@ -1,6 +1,8 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import type { FlagColor } from '@/backend/validators'
+import { FlagIcon } from '@/frontend/components/ui/flag-icon'
 import { cn } from '@/frontend/lib/utils'
 
 /**
@@ -49,18 +51,33 @@ export function ChartPanel({
   )
 }
 
-export type LegendItem = { label: string; color: string; value?: number; hint?: string }
+export type LegendItem = {
+  label: string
+  color: string
+  value?: number
+  hint?: string
+  /**
+   * Trust-flag series render as flags; vote-choice series stay squares. Opt-in
+   * rather than inferred, so a legend never guesses wrong about what its
+   * colours mean.
+   */
+  flag?: FlagColor
+}
 
 export function ChartLegend({ items, className }: { items: LegendItem[]; className?: string }) {
   return (
     <ul className={cn('flex flex-wrap gap-x-5 gap-y-2', className)}>
       {items.map((item) => (
         <li key={item.label} className="flex items-center gap-2 text-xs">
-          <span
-            className="h-2.5 w-2.5 shrink-0 rounded-[3px]"
-            style={{ backgroundColor: item.color }}
-            aria-hidden
-          />
+          {item.flag ? (
+            <FlagIcon color={item.flag} className="h-4 w-4" />
+          ) : (
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-[3px]"
+              style={{ backgroundColor: item.color }}
+              aria-hidden
+            />
+          )}
           <span className="text-bone-muted">{item.label}</span>
           {item.value !== undefined ? (
             <span className="font-medium text-bone">{item.value.toLocaleString('en-KE')}</span>

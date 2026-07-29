@@ -24,6 +24,7 @@ export function FlagDistributionChart({ candidates }: { candidates: CandidateAna
   const totals = FLAG_COLOR_ORDER.map((color) => ({
     label: `${FLAG_META[color].label} — ${FLAG_META[color].description}`,
     color: FLAG_META[color].hex,
+    flag: color,
     value: candidates.reduce((sum, candidate) => sum + candidate.flags[color], 0),
   }))
 

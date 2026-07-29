@@ -8,6 +8,7 @@ import {
   type CandidateAnalytics,
 } from '@/backend/validators'
 import { formatNumber, formatPercent } from '@/frontend/lib/format'
+import { FlagIcon } from '@/frontend/components/ui/flag-icon'
 
 /**
  * The table view of the same data the charts show.
@@ -56,11 +57,7 @@ export function TransparencyTable({ candidates }: { candidates: CandidateAnalyti
               {FLAG_COLOR_ORDER.map((color) => (
                 <th key={color} scope="col" className="px-3 py-3 font-medium text-bone-muted">
                   <span className="flex items-center gap-1.5">
-                    <span
-                      className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: FLAG_META[color].hex }}
-                      aria-hidden
-                    />
+                    <FlagIcon color={color} className="h-3.5 w-3.5" />
                     {FLAG_META[color].label}
                   </span>
                 </th>

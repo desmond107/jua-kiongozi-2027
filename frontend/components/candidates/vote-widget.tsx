@@ -14,6 +14,7 @@ import {
   type VoteChoice,
 } from '@/backend/validators'
 import { Button } from '@/frontend/components/ui/button'
+import { FlagIcon } from '@/frontend/components/ui/flag-icon'
 import { Field, FieldHint, FieldLabel, Input } from '@/frontend/components/ui/field'
 import { api, RequestError } from '@/frontend/lib/api'
 import { cn } from '@/frontend/lib/utils'
@@ -304,11 +305,7 @@ export function VoteWidget({
                   </li>
                   <li className="flex items-center gap-1.5">
                     Trust flag:
-                    <span
-                      className="inline-block h-2.5 w-2.5 rounded-full"
-                      style={{ backgroundColor: color ? FLAG_META[color].hex : undefined }}
-                      aria-hidden
-                    />
+                    {color ? <FlagIcon color={color} className="h-4 w-4" /> : null}
                     <strong className="font-semibold text-bone">
                       {color ? FLAG_META[color].label : ''}
                     </strong>

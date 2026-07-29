@@ -1,6 +1,7 @@
 import { FLAG_COLOR_ORDER, FLAG_META, type FlagColor } from '@/backend/validators'
 import type { FlagBreakdown } from '@/backend/validators'
 import { cn } from '@/frontend/lib/utils'
+import { FlagIcon } from '@/frontend/components/ui/flag-icon'
 
 /**
  * The compact flag-distribution indicator shown on each candidate card.
@@ -57,11 +58,7 @@ export function FlagBar({
         <ul className="flex flex-wrap gap-x-4 gap-y-1">
           {FLAG_COLOR_ORDER.map((color) => (
             <li key={color} className="flex items-center gap-1.5 text-xs text-bone-dim">
-              <span
-                className="h-2 w-2 rounded-full"
-                style={{ backgroundColor: FLAG_META[color].hex }}
-                aria-hidden
-              />
+              <FlagIcon color={color} className="h-3.5 w-3.5" />
               {FLAG_META[color].label} {flags[color]}
             </li>
           ))}
@@ -75,20 +72,12 @@ export function FlagBar({
          */
         <p className="flex items-center justify-between text-[11px] text-bone-dim">
           <span className="flex items-center gap-1.5">
-            <span
-              className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: FLAG_META.GREEN.hex }}
-              aria-hidden
-            />
+            <FlagIcon color="GREEN" className="h-3.5 w-3.5" />
             {Math.round((flags.GREEN / total) * 100)}% trust
           </span>
           <span className="flex items-center gap-1.5">
             {Math.round(((flags.RED + flags.BLACK) / total) * 100)}% concern
-            <span
-              className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: FLAG_META.RED.hex }}
-              aria-hidden
-            />
+            <FlagIcon color="RED" className="h-3.5 w-3.5" />
           </span>
         </p>
       )}
@@ -96,12 +85,7 @@ export function FlagBar({
   )
 }
 
+/** Kept as a named alias so existing call sites read naturally. */
 export function FlagDot({ color, className }: { color: FlagColor; className?: string }) {
-  return (
-    <span
-      className={cn('inline-block h-2.5 w-2.5 rounded-full', className)}
-      style={{ backgroundColor: FLAG_META[color].hex }}
-      aria-hidden
-    />
-  )
+  return <FlagIcon color={color} className={cn('h-3.5 w-3.5', className)} />
 }

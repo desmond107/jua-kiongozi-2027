@@ -1,6 +1,7 @@
 'use client'
 
 import { FLAG_COLOR_ORDER, FLAG_META, FLAG_QUESTION, type FlagColor } from '@/backend/validators'
+import { FlagIcon } from '@/frontend/components/ui/flag-icon'
 import { cn } from '@/frontend/lib/utils'
 
 /**
@@ -50,11 +51,7 @@ export function FlagWidget({
                   : undefined
               }
             >
-              <span
-                className="mt-0.5 h-4 w-4 shrink-0 rounded-full ring-2 ring-white/20"
-                style={{ backgroundColor: meta.hex }}
-                aria-hidden
-              />
+              <FlagIcon color={color} className="mt-0.5 h-5 w-5" />
               <span className="space-y-0.5">
                 <span className="block text-sm font-medium text-bone">{meta.label} flag</span>
                 <span className="block text-xs leading-relaxed text-bone-dim">

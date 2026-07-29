@@ -15,6 +15,7 @@ import {
   VOTE_CHOICE_ORDER,
 } from '@/backend/validators'
 import { CandidatePager } from '@/frontend/components/candidates/candidate-pager'
+import { FlagIcon } from '@/frontend/components/ui/flag-icon'
 import { CandidatePortrait } from '@/frontend/components/candidates/candidate-portrait'
 import { FlagBar } from '@/frontend/components/candidates/flag-bar'
 import { VoteWidget } from '@/frontend/components/candidates/vote-widget'
@@ -194,11 +195,7 @@ export default async function CandidateProfilePage({ params }: { params: { slug:
                   <ul className="space-y-1.5">
                     {FLAG_COLOR_ORDER.map((color) => (
                       <li key={color} className="flex items-center gap-2 text-xs">
-                        <span
-                          className="h-2.5 w-2.5 rounded-full"
-                          style={{ backgroundColor: FLAG_META[color].hex }}
-                          aria-hidden
-                        />
+                        <FlagIcon color={color} className="h-4 w-4" />
                         <span className="text-bone-muted">{FLAG_META[color].label}</span>
                         <span className="ml-auto font-medium text-bone">
                           {formatNumber(analytics.flags[color])}
