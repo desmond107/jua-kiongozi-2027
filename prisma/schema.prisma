@@ -14,9 +14,23 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// Two URLs, because the two workloads want opposite things from a connection.
+//
+//   url       — the POOLED endpoint. Every serverless invocation opens its own
+//               connection, and Postgres runs out of those long before Vercel
+//               runs out of lambdas. PgBouncer multiplexes them.
+//   directUrl — the UNPOOLED endpoint, used only by `migrate` and `db seed`.
+//               Migrations take a session-level advisory lock, which a
+//               transaction-mode pooler does not reliably hold across
+//               statements, so running them through the pooler can hang.
+//
+// Both must be set everywhere, including locally and in CI — Prisma validates
+// the datasource block up front and fails with P1012 if either is missing.
+// Off Neon, point DIRECT_URL at the same host as DATABASE_URL.
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
