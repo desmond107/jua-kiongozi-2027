@@ -16,6 +16,9 @@ env:
   # exist so the app boots in CI. `tests/setup.ts` refuses to run against a
   # DATABASE_URL that does not look disposable.
   DATABASE_URL: postgresql://postgres:postgres@localhost:5432/jua_kiongozi_test?schema=public
+  # The CI Postgres service has no pooler in front of it, so the direct URL the
+  # schema requires for migrations is simply the same address.
+  DIRECT_URL: postgresql://postgres:postgres@localhost:5432/jua_kiongozi_test?schema=public
   JWT_SECRET: ci-jwt-secret-value-at-least-32-characters-long
   TOKEN_HASH_SECRET: ci-token-hash-secret-at-least-32-characters!!
   IDENTITY_HASH_SECRET: ci-identity-hash-secret-at-least-32-chars!!!
