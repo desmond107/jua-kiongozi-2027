@@ -184,6 +184,71 @@ describe('separate vote and flag endpoints', () => {
       ),
     ).rejects.toThrow(/already voted/i)
   })
+
+  /**
+   * The reverse ordering, which used to lose the vote outright.
+   *
+   * `submitBallot` created the flag unconditionally, so a flag recorded earlier
+   * by `/api/flag` collided with `@@unique([userId, candidateId])`, rolled the
+   * whole transaction back, and surfaced as "you have already rated this
+   * candidate" — while no vote existed. Every retry failed identically, so the
+   * citizen could never cast that vote at all.
+   */
+  it('accepts a combined ballot after the flag was recorded separately', async () => {
+    const citizen = await registerCitizen()
+    const candidate = candidates[0]!
+
+    await submitFlag(
+      { candidateId: candidate.id, token: citizen.rawToken, color: 'RED' } as never,
+      citizen.userId,
+    )
+
+    const receipt = await submitBallot(ballot(candidate.id, citizen.rawToken), citizen.userId)
+
+    // The vote — the half that was missing — is what had to land.
+    expect(await prisma.vote.count()).toBe(1)
+    expect(await prisma.flag.count()).toBe(1)
+    expect(await prisma.tokenUsage.count()).toBe(1)
+    expect(receipt.candidatesRated).toBe(1)
+  })
+
+  it('keeps the original flag colour and reports it, rather than the resubmitted one', async () => {
+    const citizen = await registerCitizen()
+    const candidate = candidates[0]!
+
+    await submitFlag(
+      { candidateId: candidate.id, token: citizen.rawToken, color: 'RED' } as never,
+      citizen.userId,
+    )
+
+    // `ballot()` submits GREEN. A flag is a one-time answer, so RED stands and
+    // the receipt must say so — reporting GREEN would tell the citizen their
+    // resubmission changed something when it did not.
+    const receipt = await submitBallot(ballot(candidate.id, citizen.rawToken), citizen.userId)
+
+    expect(receipt.color).toBe('RED')
+    const stored = await prisma.flag.findFirstOrThrow({ where: { userId: citizen.userId } })
+    expect(stored.color).toBe('RED')
+  })
+
+  it('still refuses a second ballot after a flag-then-ballot sequence', async () => {
+    const citizen = await registerCitizen()
+    const candidate = candidates[0]!
+
+    await submitFlag(
+      { candidateId: candidate.id, token: citizen.rawToken, color: 'RED' } as never,
+      citizen.userId,
+    )
+    await submitBallot(ballot(candidate.id, citizen.rawToken), citizen.userId)
+
+    // Tolerating the pre-existing flag must not have loosened the one-rating
+    // rule: the vote now exists, so a second ballot is a genuine duplicate.
+    await expect(
+      submitBallot(ballot(candidate.id, citizen.rawToken), citizen.userId),
+    ).rejects.toThrow(/already rated/i)
+
+    expect(await prisma.vote.count()).toBe(1)
+  })
 })
 
 describe('voting under concurrency', () => {

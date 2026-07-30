@@ -66,19 +66,40 @@ export async function submitBallot(
     throw ApiError.conflict('You have already rated this candidate. Each candidate is rated once.')
   }
 
+  // The flag half may already exist, because `/api/flag` can record one on its
+  // own. That is NOT a reason to reject the ballot: the vote half is still
+  // missing, and it is the thing the citizen is here to cast. This used to
+  // create the flag unconditionally, so a prior flag collided with
+  // `@@unique([userId, candidateId])`, rolled the whole transaction back, and
+  // reported "you have already rated this candidate" — leaving the vote
+  // permanently uncastable, since every retry failed the same way.
+  let recordedColor = payload.color
+
   try {
     await prisma.$transaction(async (tx) => {
       await voteRepository.create(
         { userId, candidateId: candidate.id, choice: payload.choice, county },
         tx,
       )
-      await flagRepository.create(
-        { userId, candidateId: candidate.id, color: payload.color, county },
-        tx,
-      )
-      // Spends the token against this candidate. Any concurrent duplicate
-      // request fails here and the whole transaction rolls back.
-      await tokenRepository.recordUsage(token.id, candidate.id, tx)
+
+      const existingFlag = await flagRepository.findForUserAndCandidate(userId, candidate.id, tx)
+
+      if (existingFlag) {
+        // A flag is a one-time answer, so the earlier one stands rather than
+        // being overwritten. The receipt reports what is actually stored, not
+        // what this request asked for.
+        recordedColor = existingFlag.color
+      } else {
+        await flagRepository.create(
+          { userId, candidateId: candidate.id, color: payload.color, county },
+          tx,
+        )
+      }
+
+      // Spends the token against this candidate, tolerating a spend the flag
+      // half already recorded. A concurrent duplicate still fails on the unique
+      // constraint and rolls the whole transaction back.
+      await ensureUsageRecorded(token.id, candidate.id, tx)
       await tokenRepository.markFirstUse(token.id, tx)
     })
   } catch (error) {
@@ -91,7 +112,7 @@ export async function submitBallot(
     candidateId: candidate.id,
     candidateName: candidate.fullName,
     choice: payload.choice,
-    color: payload.color,
+    color: recordedColor,
     recordedAt: new Date().toISOString(),
     candidatesRated: rated.length,
   }

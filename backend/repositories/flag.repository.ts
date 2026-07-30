@@ -10,8 +10,17 @@ export const flagRepository = {
     return (tx ?? prisma).flag.create({ data })
   },
 
-  findForUserAndCandidate(userId: string, candidateId: string): Promise<Flag | null> {
-    return prisma.flag.findUnique({
+  /**
+   * Accepts a transaction client so a caller writing a vote and a flag together
+   * can check for an existing flag INSIDE that transaction. Checking outside it
+   * would read a snapshot that the transaction may already have moved past.
+   */
+  findForUserAndCandidate(
+    userId: string,
+    candidateId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Flag | null> {
+    return (tx ?? prisma).flag.findUnique({
       where: { userId_candidateId: { userId, candidateId } },
     })
   },
