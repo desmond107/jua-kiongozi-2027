@@ -5,7 +5,7 @@ import { getSession } from '@/backend/services/session.service'
 import { submitFlag } from '@/backend/services/flag.service'
 import { submitFlagSchema } from '@/backend/validators'
 import { ApiError, handle, ok, parseBody } from '@/backend/utils/http.util'
-import { RATE_LIMITS, consumeIpRateLimit } from '@/backend/utils/rateLimiter.util'
+import { RATE_LIMITS, consumeIpRateLimit, consumeRateLimit } from '@/backend/utils/rateLimiter.util'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,6 +28,19 @@ export async function POST(request: NextRequest) {
       throw ApiError.tooManyRequests(
         'Too many submissions from this connection. Please try again shortly.',
         byIp.retryAfter,
+      )
+    }
+
+    // Keyed on the account, and NOT optional. `consumeIpRateLimit` skips itself
+    // entirely where no trustworthy client IP exists, so without this layer a
+    // deployment lacking `request.ip` and `TRUSTED_PROXY_HOPS` would leave this
+    // endpoint with no rate limiting at all. `/api/vote` has always had both;
+    // this one was missing its per-user half.
+    const byUser = await consumeRateLimit(`flag:user:${session.userId}`, RATE_LIMITS.voteByUser)
+    if (!byUser.allowed) {
+      throw ApiError.tooManyRequests(
+        'Too many submissions. Please try again shortly.',
+        byUser.retryAfter,
       )
     }
 
