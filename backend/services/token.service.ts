@@ -175,23 +175,6 @@ export async function verifyToken(
   return { token: record, userId: record.userId, county: owner.county }
 }
 
-/**
- * Rejects a token that has already been spent on this candidate.
- *
- * This is the advisory check that produces a friendly message; the TokenUsage
- * unique constraint is the authoritative one and still fires under a race.
- */
-export async function assertNotSpentOnCandidate(
-  tokenId: string,
-  candidateId: string,
-): Promise<void> {
-  const spent = await tokenRepository.spentCandidateIds(tokenId)
-
-  if (spent.includes(candidateId)) {
-    throw ApiError.conflict('You have already rated this candidate. Each candidate is rated once.')
-  }
-}
-
 /** Candidate ids this user has already spent their token on. */
 export async function spentCandidatesForUser(userId: string): Promise<string[]> {
   const token = await tokenRepository.findActiveForUser(userId)
