@@ -31,7 +31,7 @@ const STEPS = [
   {
     icon: Users,
     title: 'Rate the candidates',
-    body: 'Cast one sentiment vote and one trust flag per candidate. Your token is spent against that candidate and can never be used for them again.',
+    body: 'Cast one sentiment vote and one trust flag per candidate. Your token is spent against that candidate, and presenting it again changes that rating rather than adding another — you count once, and you may change your mind.',
   },
   {
     icon: LineChart,

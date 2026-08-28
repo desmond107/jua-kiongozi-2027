@@ -16,8 +16,11 @@ export const dynamic = 'force-dynamic'
  * the trust flag are written together in a single transaction — that is the
  * path the product UI uses, since both answers are collected on one screen.
  *
- * Token verification, account binding and single-use enforcement all happen in
- * `vote.service`; this handler only validates shape and applies rate limits.
+ * Submitting again for a candidate the citizen has already rated REVISES that
+ * rating rather than being refused; they still count exactly once in the
+ * totals. Token verification, account binding and the one-voice-per-candidate
+ * rule all happen in `vote.service`; this handler only validates shape and
+ * applies rate limits.
  */
 export async function POST(request: NextRequest) {
   return handle(async () => {
@@ -67,6 +70,10 @@ export async function POST(request: NextRequest) {
     revalidatePath('/candidates')
     revalidatePath('/')
 
-    return ok(receipt, { status: 201 })
+    // 201 only when a rating came into existence. A revision replaced a row
+    // that was already there and created no new resource, so it answers 200 —
+    // the status is the one machine-readable signal an API consumer gets that
+    // their submission overwrote an earlier answer.
+    return ok(receipt, { status: receipt.revised ? 200 : 201 })
   })
 }

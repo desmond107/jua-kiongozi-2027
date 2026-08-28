@@ -63,9 +63,11 @@ model User {
 /// A citizen's single voting credential. One row per user — it is issued once at
 /// registration and can never be reissued (see token.service.ts).
 ///
-/// "Single use" is enforced *per candidate*: the credential authorises exactly
-/// one vote + flag for each candidate, and can never be replayed against a
-/// candidate it has already been spent on. Each spend is recorded in TokenUsage.
+/// "Single use" is enforced *per candidate*, and it caps voices rather than
+/// submissions: the credential authorises exactly one standing vote + flag for
+/// each candidate. Re-presenting it for a candidate already rated REVISES that
+/// rating in place; it never adds a second one. Each candidate spent on is
+/// recorded once in TokenUsage.
 model VotingToken {
   id          String    @id @default(cuid())
   tokenHash   String    @unique
@@ -91,9 +93,11 @@ model VotingToken {
   @@map("voting_tokens")
 }
 
-/// Immutable ledger of every candidate a credential has been spent on. The
-/// unique constraint is the hard, database-level guarantee that a token can
-/// never be replayed against the same candidate twice.
+/// Ledger of every candidate a credential has been spent on — one row per
+/// candidate, written on the first rating and never again. Revising a rating
+/// re-presents the token but does not add a row, so `count` here remains the
+/// number of candidates this citizen has an opinion on. The unique constraint
+/// is the database-level guarantee of that one-row-per-candidate property.
 model TokenUsage {
   id          String      @id @default(cuid())
   tokenId     String
@@ -127,6 +131,14 @@ model Candidate {
   @@map("candidates")
 }
 
+/// A citizen's standing sentiment on one candidate.
+///
+/// The row is unique per (user, candidate) and is UPDATED, never duplicated,
+/// when a citizen changes their mind — so the published totals always count
+/// each citizen exactly once per candidate while still reflecting what they
+/// currently think. `createdAt` is when they first answered; `updatedAt` moves
+/// with each revision, and the two being equal is how a surface tells an
+/// original rating from a revised one.
 model Vote {
   id          String     @id @default(cuid())
   choice      VoteChoice
@@ -139,6 +151,7 @@ model Vote {
   // identity columns entirely).
   county      String?
   createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @default(now()) @updatedAt
 
   @@unique([userId, candidateId])
   @@index([candidateId])
@@ -146,6 +159,8 @@ model Vote {
   @@map("votes")
 }
 
+/// A citizen's standing trust flag on one candidate. Revisable on exactly the
+/// same terms as Vote — see the note there.
 model Flag {
   id          String    @id @default(cuid())
   color       FlagColor
@@ -155,6 +170,7 @@ model Flag {
   candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
   county      String?
   createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
 
   @@unique([userId, candidateId])
   @@index([candidateId])
@@ -207,6 +223,32 @@ model RateLimit {
 
   @@index([windowStart])
   @@map("rate_limits")
+}
+
+/// Tombstone for an erased account. Two irreversible hashes and a timestamp —
+/// no name, no county, no masked digits, nothing that describes a person.
+///
+/// WHY ANYTHING SURVIVES DELETION AT ALL
+/// ─────────────────────────────────────
+/// `User.idNumberHash` is what makes one-citizen-one-voice true: registration
+/// refuses an ID that already has an account. Deleting the user row frees that
+/// hash. Without this table, "delete my account" would double as "give me a
+/// fresh ballot", repeatable without limit — the single cheapest way to forge
+/// the results this platform exists to publish.
+///
+/// So the two lookup hashes outlive the account and nothing else does. They
+/// were never reversible, they identify no one on their own, and they are
+/// retained for the narrow purpose of refusing a second registration. That is
+/// disclosed on the deletion screen and in the privacy policy, because a
+/// citizen deserves to know before they press the button that this is what
+/// "permanent" means.
+model DeletedIdentity {
+  id           String   @id @default(cuid())
+  phoneHash    String   @unique
+  idNumberHash String   @unique
+  deletedAt    DateTime @default(now())
+
+  @@map("deleted_identities")
 }
 
 /// A platform operator. Deliberately a separate table from `User` rather than a

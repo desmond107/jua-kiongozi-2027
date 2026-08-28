@@ -6,12 +6,12 @@ import { cn } from '@/frontend/lib/utils'
 /**
  * Previous / next navigation between candidate profiles.
  *
- * A profile used to be a dead end: rating all seven meant returning to the grid
+ * A profile used to be a dead end: rating all eight meant returning to the grid
  * between each one. Participation is the entire product, so friction on that
  * loop is the most expensive friction on the site. The pager wraps around, so
  * there is always somewhere to go next.
  *
- * Position is stated ("3 of 7") because a reader stepping through the field
+ * Position is stated ("3 of 8") because a reader stepping through the field
  * should know how much is left — the same reason the voter card shows progress.
  */
 export function CandidatePager({

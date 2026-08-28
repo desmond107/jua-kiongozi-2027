@@ -65,6 +65,14 @@ export const RATE_LIMITS = {
   voteByIp: { limit: 30 * RELAX, windowSeconds: 60 * 60 },
   voteByUser: { limit: 20 * RELAX, windowSeconds: 60 * 60 },
   /**
+   * Account erasure. The tightest bucket here, because the action is
+   * irreversible and a legitimate citizen performs it at most once. Anything
+   * beyond a couple of attempts is someone probing with a session they should
+   * not have, and each attempt also costs an SMS.
+   */
+  deleteAccountByIp: { limit: 3 * RELAX, windowSeconds: 60 * 60 },
+  deleteAccountByUser: { limit: 3 * RELAX, windowSeconds: 60 * 60 },
+  /**
    * Operator sign-in. Far tighter than citizen sign-in, because the two are not
    * comparable prizes: guessing a citizen's token exposes one ballot, guessing
    * an operator's password exposes the registrant list for the whole platform.

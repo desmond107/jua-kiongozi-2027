@@ -4,6 +4,7 @@ import { submitBallot, submitVote } from '@/backend/services/vote.service'
 import type { BallotReceipt } from '@/backend/services/vote.service'
 import { submitFlag } from '@/backend/services/flag.service'
 import type { FlagReceipt } from '@/backend/services/flag.service'
+import { citizenRatingFor } from '@/backend/services/vote.service'
 import { verifyToken, spentCandidatesForUser } from '@/backend/services/token.service'
 import type { SubmitBallotPayload } from '@/backend/validators'
 import { race, registerCitizen, resetDatabase, seedCandidates } from './helpers'
@@ -12,9 +13,11 @@ import { race, registerCitizen, resetDatabase, seedCandidates } from './helpers'
  * "One rating per citizen per candidate" — the invariant the published results
  * rest on.
  *
- * The application checks it, but the authoritative guarantee is a pair of
- * database constraints. These tests attack the property directly, including
- * under genuine concurrency, because a check-then-write in application code
+ * The invariant caps voices, not submissions: a citizen may come back and
+ * change what they said, and the existing row is updated rather than joined by
+ * a second one. These tests attack both halves of that — that a revision moves
+ * the answer, and that it can never inflate a citizen into two — including
+ * under genuine concurrency, because a read-then-write in application code
  * looks correct right up until two requests interleave.
  */
 
@@ -30,8 +33,12 @@ afterAll(async () => {
   await prisma.$disconnect()
 })
 
-const ballot = (candidateId: string, token: string): SubmitBallotPayload =>
-  ({ candidateId, token, choice: 'YES', color: 'GREEN' }) as SubmitBallotPayload
+const ballot = (
+  candidateId: string,
+  token: string,
+  choice: SubmitBallotPayload['choice'] = 'YES',
+  color: SubmitBallotPayload['color'] = 'GREEN',
+): SubmitBallotPayload => ({ candidateId, token, choice, color }) as SubmitBallotPayload
 
 describe('casting a ballot', () => {
   it('records the vote and the flag together', async () => {
@@ -62,14 +69,12 @@ describe('casting a ballot', () => {
     expect(await spentCandidatesForUser(citizen.userId)).toHaveLength(candidates.length)
   })
 
-  it('refuses a second rating for the same candidate', async () => {
+  it('never lets a second submission become a second rating', async () => {
     const citizen = await registerCitizen()
     await submitBallot(ballot(candidates[0]!.id, citizen.rawToken), citizen.userId)
+    await submitBallot(ballot(candidates[0]!.id, citizen.rawToken, 'NO', 'RED'), citizen.userId)
 
-    await expect(
-      submitBallot(ballot(candidates[0]!.id, citizen.rawToken), citizen.userId),
-    ).rejects.toThrow(/already rated/i)
-
+    // The whole point of the constraint: two submissions, one voice.
     expect(await prisma.vote.count()).toBe(1)
     expect(await prisma.flag.count()).toBe(1)
   })
@@ -93,6 +98,117 @@ describe('casting a ballot', () => {
 
     await submitBallot(ballot(candidates[1]!.id, citizen.rawToken), citizen.userId)
     expect((await prisma.votingToken.findFirstOrThrow()).usedAt).toEqual(firstUse)
+  })
+})
+
+describe('changing a rating', () => {
+  it('moves the answer without adding a row', async () => {
+    const citizen = await registerCitizen()
+    const candidate = candidates[0]!
+
+    await submitBallot(ballot(candidate.id, citizen.rawToken, 'YES', 'GREEN'), citizen.userId)
+    const receipt = await submitBallot(
+      ballot(candidate.id, citizen.rawToken, 'NO', 'BLACK'),
+      citizen.userId,
+    )
+
+    expect(receipt.revised).toBe(true)
+    expect(receipt.choice).toBe('NO')
+    expect(receipt.color).toBe('BLACK')
+
+    expect(await prisma.vote.count()).toBe(1)
+    expect(await prisma.flag.count()).toBe(1)
+    expect((await prisma.vote.findFirstOrThrow()).choice).toBe('NO')
+    expect((await prisma.flag.findFirstOrThrow()).color).toBe('BLACK')
+  })
+
+  it('reports the first rating as not a revision', async () => {
+    const citizen = await registerCitizen()
+    const receipt = await submitBallot(ballot(candidates[0]!.id, citizen.rawToken), citizen.userId)
+
+    expect(receipt.revised).toBe(false)
+  })
+
+  it('does not spend the token a second time', async () => {
+    const citizen = await registerCitizen()
+    const candidate = candidates[0]!
+
+    await submitBallot(ballot(candidate.id, citizen.rawToken), citizen.userId)
+    const before = (await prisma.votingToken.findFirstOrThrow()).usedAt
+
+    const receipt = await submitBallot(
+      ballot(candidate.id, citizen.rawToken, 'NOT_SURE', 'ORANGE'),
+      citizen.userId,
+    )
+
+    // A revision is the same voice speaking again, so the ledger, the count of
+    // candidates rated, and the first-use stamp must all be untouched.
+    expect(await prisma.tokenUsage.count()).toBe(1)
+    expect(receipt.candidatesRated).toBe(1)
+    expect((await prisma.votingToken.findFirstOrThrow()).usedAt).toEqual(before)
+  })
+
+  it('keeps createdAt and moves updatedAt', async () => {
+    const citizen = await registerCitizen()
+    const candidate = candidates[0]!
+
+    await submitBallot(ballot(candidate.id, citizen.rawToken), citizen.userId)
+    const original = await prisma.vote.findFirstOrThrow()
+
+    await submitBallot(ballot(candidate.id, citizen.rawToken, 'NO', 'RED'), citizen.userId)
+    const revised = await prisma.vote.findFirstOrThrow()
+
+    // The pair is what tells a surface "recorded on X" from "last changed on X".
+    expect(revised.createdAt).toEqual(original.createdAt)
+    expect(revised.updatedAt.getTime()).toBeGreaterThan(original.updatedAt.getTime())
+  })
+
+  it('still requires the citizen\'s own token', async () => {
+    const alice = await registerCitizen()
+    const mallory = await registerCitizen()
+    const candidate = candidates[0]!
+
+    await submitBallot(ballot(candidate.id, alice.rawToken), alice.userId)
+
+    // Revising is not a session privilege. Mallory holds a valid session and a
+    // valid token — just not the one that owns this rating.
+    await expect(
+      submitBallot(ballot(candidate.id, mallory.rawToken), alice.userId),
+    ).rejects.toThrow(/not valid/i)
+
+    expect((await prisma.vote.findFirstOrThrow()).choice).toBe('YES')
+  })
+
+  it('reports the standing answer, and whether it has been changed', async () => {
+    const citizen = await registerCitizen()
+    const candidate = candidates[0]!
+
+    expect(await citizenRatingFor(citizen.userId, candidate.id)).toBeNull()
+
+    await submitBallot(ballot(candidate.id, citizen.rawToken, 'YES', 'GREEN'), citizen.userId)
+    const first = await citizenRatingFor(citizen.userId, candidate.id)
+    expect(first).toMatchObject({ choice: 'YES', color: 'GREEN', revised: false })
+
+    await submitBallot(ballot(candidate.id, citizen.rawToken, 'NO', 'RED'), citizen.userId)
+    const after = await citizenRatingFor(citizen.userId, candidate.id)
+    expect(after).toMatchObject({ choice: 'NO', color: 'RED', revised: true })
+    // The first answer's timestamp is what "recorded" means; it does not move.
+    expect(after!.recordedAt).toBe(first!.recordedAt)
+  })
+
+  it('leaves other candidates and other citizens alone', async () => {
+    const alice = await registerCitizen()
+    const bob = await registerCitizen()
+
+    await submitBallot(ballot(candidates[0]!.id, alice.rawToken, 'YES', 'GREEN'), alice.userId)
+    await submitBallot(ballot(candidates[1]!.id, alice.rawToken, 'YES', 'GREEN'), alice.userId)
+    await submitBallot(ballot(candidates[0]!.id, bob.rawToken, 'YES', 'GREEN'), bob.userId)
+
+    await submitBallot(ballot(candidates[0]!.id, alice.rawToken, 'NO', 'BLACK'), alice.userId)
+
+    expect(await prisma.vote.count()).toBe(3)
+    const untouched = await prisma.vote.findMany({ where: { choice: 'YES' } })
+    expect(untouched).toHaveLength(2)
   })
 })
 
@@ -164,7 +280,7 @@ describe('separate vote and flag endpoints', () => {
     expect(await prisma.tokenUsage.count()).toBe(1)
   })
 
-  it('still refuses a second vote after a vote-then-flag sequence', async () => {
+  it('revises the vote after a vote-then-flag sequence, without touching the flag', async () => {
     const citizen = await registerCitizen()
     const candidate = candidates[0]!
 
@@ -177,12 +293,17 @@ describe('separate vote and flag endpoints', () => {
       citizen.userId,
     )
 
-    await expect(
-      submitVote(
-        { candidateId: candidate.id, token: citizen.rawToken, choice: 'YES' } as never,
-        citizen.userId,
-      ),
-    ).rejects.toThrow(/already voted/i)
+    const receipt = await submitVote(
+      { candidateId: candidate.id, token: citizen.rawToken, choice: 'YES' } as never,
+      citizen.userId,
+    )
+
+    expect(receipt.revised).toBe(true)
+    expect(await prisma.vote.count()).toBe(1)
+    expect((await prisma.vote.findFirstOrThrow()).choice).toBe('YES')
+    // The vote endpoint says nothing about flags, so the flag must be left as
+    // it was rather than reset to a default by a vote-only submission.
+    expect((await prisma.flag.findFirstOrThrow()).color).toBe('RED')
   })
 
   /**
@@ -212,7 +333,7 @@ describe('separate vote and flag endpoints', () => {
     expect(receipt.candidatesRated).toBe(1)
   })
 
-  it('keeps the original flag colour and reports it, rather than the resubmitted one', async () => {
+  it('moves a separately-recorded flag to the colour the ballot submitted', async () => {
     const citizen = await registerCitizen()
     const candidate = candidates[0]!
 
@@ -221,17 +342,18 @@ describe('separate vote and flag endpoints', () => {
       citizen.userId,
     )
 
-    // `ballot()` submits GREEN. A flag is a one-time answer, so RED stands and
-    // the receipt must say so — reporting GREEN would tell the citizen their
-    // resubmission changed something when it did not.
+    // `ballot()` submits GREEN. Both halves of a ballot are answers the citizen
+    // just gave on one screen, so GREEN must win — silently keeping RED would
+    // report a colour they did not choose as their current position.
     const receipt = await submitBallot(ballot(candidate.id, citizen.rawToken), citizen.userId)
 
-    expect(receipt.color).toBe('RED')
+    expect(receipt.color).toBe('GREEN')
     const stored = await prisma.flag.findFirstOrThrow({ where: { userId: citizen.userId } })
-    expect(stored.color).toBe('RED')
+    expect(stored.color).toBe('GREEN')
+    expect(await prisma.flag.count()).toBe(1)
   })
 
-  it('still refuses a second ballot after a flag-then-ballot sequence', async () => {
+  it('keeps one row through a flag, a ballot and a revision of that ballot', async () => {
     const citizen = await registerCitizen()
     const candidate = candidates[0]!
 
@@ -240,14 +362,14 @@ describe('separate vote and flag endpoints', () => {
       citizen.userId,
     )
     await submitBallot(ballot(candidate.id, citizen.rawToken), citizen.userId)
+    await submitBallot(ballot(candidate.id, citizen.rawToken, 'NOT_SURE', 'ORANGE'), citizen.userId)
 
-    // Tolerating the pre-existing flag must not have loosened the one-rating
-    // rule: the vote now exists, so a second ballot is a genuine duplicate.
-    await expect(
-      submitBallot(ballot(candidate.id, citizen.rawToken), citizen.userId),
-    ).rejects.toThrow(/already rated/i)
-
+    // Three submissions across two endpoints, one standing answer.
     expect(await prisma.vote.count()).toBe(1)
+    expect(await prisma.flag.count()).toBe(1)
+    expect(await prisma.tokenUsage.count()).toBe(1)
+    expect((await prisma.vote.findFirstOrThrow()).choice).toBe('NOT_SURE')
+    expect((await prisma.flag.findFirstOrThrow()).color).toBe('ORANGE')
   })
 })
 
@@ -255,31 +377,44 @@ describe('voting under concurrency', () => {
   it('records exactly one vote when the same ballot is submitted 10 times at once', async () => {
     const citizen = await registerCitizen()
 
-    // The check-then-write in vote.service cannot survive this on its own; the
-    // @@unique([userId, candidateId]) constraint is what holds.
+    // A double-click, a retried request, a flaky connection: none of them may
+    // produce a second row. The read-then-upsert in vote.service cannot survive
+    // this on its own; `INSERT … ON CONFLICT` against
+    // @@unique([userId, candidateId]) is what holds.
     const outcome = await race(10, () =>
       submitBallot(ballot(candidates[0]!.id, citizen.rawToken), citizen.userId),
     )
 
-    expect(outcome.fulfilled).toBe(1)
-    expect(outcome.rejected).toBe(9)
+    // Every one of them is now a legitimate submission rather than a duplicate
+    // to reject — they simply converge on one row.
+    expect(outcome.rejected).toBe(0)
     expect(await prisma.vote.count()).toBe(1)
     expect(await prisma.flag.count()).toBe(1)
     expect(await prisma.tokenUsage.count()).toBe(1)
   })
 
-  it('reports the duplicate as a conflict, not an internal error', async () => {
+  it('settles on one of the submitted answers when revisions collide', async () => {
     const citizen = await registerCitizen()
+    const choices = ['YES', 'NO', 'NOT_SURE'] as const
+    const colors = ['GREEN', 'RED', 'BLACK'] as const
 
-    const outcome = await race(6, () =>
-      submitBallot(ballot(candidates[0]!.id, citizen.rawToken), citizen.userId),
+    await submitBallot(ballot(candidates[0]!.id, citizen.rawToken), citizen.userId)
+
+    // Three different revisions of the same rating, at once. Last writer wins
+    // is the acceptable outcome; a second row, a lost row, or a raw database
+    // error surfacing to the citizen is not.
+    const outcome = await race(3, (i) =>
+      submitBallot(
+        ballot(candidates[0]!.id, citizen.rawToken, choices[i]!, colors[i]!),
+        citizen.userId,
+      ),
     )
 
-    // A raw P2002 leaking to the user as a 500 would be a bug; every loser must
-    // get the friendly conflict message.
-    for (const reason of outcome.reasons) {
-      expect(reason).toMatch(/already rated/i)
-    }
+    expect(outcome.rejected).toBe(0)
+    expect(await prisma.vote.count()).toBe(1)
+    expect(await prisma.flag.count()).toBe(1)
+    expect(choices).toContain((await prisma.vote.findFirstOrThrow()).choice)
+    expect(colors).toContain((await prisma.flag.findFirstOrThrow()).color)
   })
 
   it('allows simultaneous ratings of DIFFERENT candidates by one citizen', async () => {

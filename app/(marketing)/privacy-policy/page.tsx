@@ -113,12 +113,29 @@ export default function PrivacyPolicyPage() {
             Under the Data Protection Act, 2019, you have the right to be informed about how your
             data is used, to access it, to have inaccurate data corrected, and to request deletion.
           </p>
+          <p className="text-base leading-relaxed text-bone-muted">
+            You can delete your account yourself, at any time, from your Voter Card. It asks for a
+            code sent to your registered number, because an action this final should not be possible
+            for someone who has merely borrowed your phone.
+          </p>
+          <p className="text-base leading-relaxed text-bone-muted">
+            Deletion is complete. Your registration, your voting token and{' '}
+            <strong className="font-semibold text-bone">every rating you cast</strong> are removed,
+            and your ratings come out of the published totals — so the public figures can go down
+            when someone leaves. We would rather the numbers moved than count a person who asked to
+            be forgotten.
+          </p>
           <p className="text-sm leading-relaxed text-bone-dim">
-            One honest limitation: because your votes are stored against a hash rather than a
-            readable identifier, deleting your account removes your registration and your ability to
-            vote further, but already-counted ratings cannot be individually withdrawn from the
-            aggregate totals without undermining the integrity of results other people are relying
-            on.
+            Two things survive, and you should know before you decide. A hashed form of your phone
+            number and national ID is kept so that the same person cannot register a second time.
+            Those hashes are irreversible, they contain nothing readable, and they are retained for
+            that single purpose — without them, deleting and re-registering would be a way to vote
+            more than once, which is the guarantee this whole platform rests on. The practical
+            consequence is that{' '}
+            <strong className="font-semibold text-bone-muted">
+              deletion is permanent and you cannot register again
+            </strong>
+            . The deletion screen says so before you confirm.
           </p>
         </section>
 

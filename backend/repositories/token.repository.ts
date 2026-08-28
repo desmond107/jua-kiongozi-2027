@@ -45,18 +45,27 @@ export const tokenRepository = {
   },
 
   /**
-   * Records a spend. The `@@unique([tokenId, candidateId])` constraint means a
-   * concurrent duplicate request loses here with P2002 rather than producing a
-   * second vote — this is the hard, race-proof single-use guarantee.
+   * Records that this token has been spent on a candidate, exactly once.
+   *
+   * Idempotent by construction: `skipDuplicates` compiles to `INSERT … ON
+   * CONFLICT DO NOTHING`, so a second call — a citizen revising their rating,
+   * or the vote and flag halves arriving together — is a no-op instead of a
+   * P2002. That matters because a duplicate-key error inside a transaction
+   * aborts the whole transaction in Postgres, which would take the legitimate
+   * revision down with it.
+   *
+   * The `@@unique([tokenId, candidateId])` constraint is still the authority:
+   * it is what makes the conflict clause fire, and what caps the ledger at one
+   * row per candidate however many times a citizen changes their mind.
    */
-  recordUsage(
+  async recordUsage(
     tokenId: string,
     candidateId: string,
     tx?: Prisma.TransactionClient,
-  ): Promise<{ id: string }> {
-    return (tx ?? prisma).tokenUsage.create({
-      data: { tokenId, candidateId },
-      select: { id: true },
+  ): Promise<void> {
+    await (tx ?? prisma).tokenUsage.createMany({
+      data: [{ tokenId, candidateId }],
+      skipDuplicates: true,
     })
   },
 

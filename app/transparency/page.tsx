@@ -36,15 +36,29 @@ const INTEGRITY_POINTS = [
   },
   {
     title: 'One rating per candidate',
-    body: 'Every citizen may record one vote and one trust flag per candidate. A uniqueness constraint on the pair makes a second rating impossible, including under simultaneous requests.',
+    body: 'Every citizen holds one vote and one trust flag per candidate. A uniqueness constraint on the pair makes a second, separate rating impossible, including under simultaneous requests.',
+  },
+  {
+    // The constraint above caps voices, not submissions. Said plainly here
+    // because a reader who changes their own rating and sees a total stay the
+    // same size would otherwise wonder which of the two figures to believe.
+    title: 'You may change your mind',
+    body: 'A citizen can revise their vote and trust flag on a candidate at any time. The revision replaces their earlier answer in place — it never adds a second one — so the totals count each citizen exactly once while reflecting what they think now rather than what they thought the first time they clicked.',
   },
   {
     title: 'Tokens cannot be replayed',
-    body: 'Each submission must present a voting token, which is re-hashed and matched against the account it was issued to. Every candidate a token has been spent on is recorded permanently.',
+    body: 'Each submission must present a voting token, which is re-hashed and matched against the account it was issued to. Every candidate a token has been spent on is recorded permanently, and revising a rating requires the token again.',
   },
   {
     title: 'Identifiers are never stored in the clear',
     body: 'National ID numbers and phone numbers exist on our servers only as irreversible keyed hashes. Voting tokens are stored encrypted, so their owner can retrieve them after re-verifying their phone. Nothing on this page can be traced to an individual either way.',
+  },
+  {
+    // Stated because a live results page invites the assumption that counts
+    // only ever climb. They do not, and a reader who spotted a total falling
+    // without explanation would be right to distrust the whole page.
+    title: 'These totals can go down',
+    body: 'Anyone may delete their account, and doing so removes their ratings from these figures. Anyone may also change a rating, moving one from one column to another. A count that falls is a citizen withdrawing or reconsidering, not an error or a correction. A deleted national ID still cannot be registered again, so leaving is never a route to a second vote.',
   },
 ]
 

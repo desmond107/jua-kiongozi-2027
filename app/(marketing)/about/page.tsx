@@ -69,7 +69,7 @@ export default function AboutPage() {
               contains praise, criticism, prediction or endorsement.
             </p>
             <p>
-              All seven profiles follow the same structure and comparable length, so that no
+              All eight profiles follow the same structure and comparable length, so that no
               candidate reads as more prominently or more favourably covered than another. Where a
               party affiliation for the 2027 cycle is not formally and publicly settled, the profile
               says so rather than guessing.

@@ -11,6 +11,24 @@ export const flagRepository = {
   },
 
   /**
+   * Writes this citizen's standing trust flag on a candidate, replacing their
+   * earlier one. Single-statement upsert for the same concurrency reason as
+   * `voteRepository.upsert`.
+   */
+  upsert(
+    data: { userId: string; candidateId: string; color: FlagColor; county: string | null },
+    tx?: Prisma.TransactionClient,
+  ): Promise<Flag> {
+    const { userId, candidateId, color, county } = data
+
+    return (tx ?? prisma).flag.upsert({
+      where: { userId_candidateId: { userId, candidateId } },
+      create: data,
+      update: { color, county },
+    })
+  },
+
+  /**
    * Accepts a transaction client so a caller writing a vote and a flag together
    * can check for an existing flag INSIDE that transaction. Checking outside it
    * would read a snapshot that the transaction may already have moved past.

@@ -1,4 +1,9 @@
-import type { AccountStatus, LoginResult, RegistrationResult } from '@/backend/services/auth.service'
+import type {
+  AccountStatus,
+  DeletionReceipt,
+  LoginResult,
+  RegistrationResult,
+} from '@/backend/services/auth.service'
 import type { OtpChallenge } from '@/backend/services/otp.service'
 import type { RevealedToken } from '@/backend/services/token.service'
 import type { BallotReceipt } from '@/backend/services/vote.service'
@@ -6,6 +11,7 @@ import type { CandidateSummary } from '@/backend/services/candidate.service'
 import type { AnalyticsSnapshot } from '@/backend/validators'
 import type {
   AdminLoginPayload,
+  DeleteAccountInput,
   ExportDataset,
   LoginInput,
   LoginWithIdInput,
@@ -158,6 +164,17 @@ export const api = {
 
   analytics(): Promise<AnalyticsSnapshot> {
     return request<AnalyticsSnapshot>('/api/analytics')
+  },
+
+  /**
+   * Permanently erases the signed-in citizen's account and every rating on it.
+   * Irreversible: there is no companion 'restore' call, by design.
+   */
+  deleteAccount(input: DeleteAccountInput): Promise<DeletionReceipt> {
+    return request<DeletionReceipt>('/api/auth/delete-account', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    })
   },
 
   /** Operator sign-in. Sets a separate cookie from the citizen session. */

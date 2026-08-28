@@ -23,7 +23,7 @@ const TERMS = [
   },
   {
     title: 'One rating per candidate',
-    body: 'You may record one sentiment vote and one trust flag for each candidate. Ratings are final: once submitted they cannot be changed or withdrawn, because other people are relying on the published totals.',
+    body: 'You may record one sentiment vote and one trust flag for each candidate, and you may change them later by presenting your voting token again. A change replaces your earlier answer rather than adding to it, so you are counted once per candidate however many times you revise. Ratings cannot be withdrawn individually; deleting your account removes all of them together.',
   },
   {
     title: 'Acceptable use',

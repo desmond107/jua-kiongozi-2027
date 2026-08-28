@@ -14,7 +14,7 @@ import { registerCitizen, resetDatabase, seedCandidates } from './helpers'
  *
  * These back the two UX changes that matter most for participation: the grid
  * has to carry approval so the field can be compared without opening every
- * profile, and a profile has to lead somewhere so rating all seven is not seven
+ * profile, and a profile has to lead somewhere so rating all eight is not eight
  * round trips through the grid.
  */
 

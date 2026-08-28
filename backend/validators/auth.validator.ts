@@ -162,6 +162,25 @@ export const revealTokenSchema = z.object({
   otpCode: otpCodeSchema,
 })
 
+/** The word a citizen must type to confirm erasure. */
+export const DELETE_CONFIRMATION = 'DELETE'
+
+/**
+ * Permanent account erasure.
+ *
+ * Same SMS proof as the token reveal, plus a typed confirmation word. The typed
+ * word is not security — anyone who can send the request can send the word too
+ * — it is a deliberate speed bump on an action that cannot be undone, so that
+ * erasure is never one stray click away. The real gate is the SMS code.
+ */
+export const deleteAccountSchema = z.object({
+  phoneNumber: phoneNumberSchema,
+  otpCode: otpCodeSchema,
+  confirmation: z.literal(DELETE_CONFIRMATION, {
+    errorMap: () => ({ message: `Type ${DELETE_CONFIRMATION} to confirm.` }),
+  }),
+})
+
 export type RegisterInput = z.input<typeof registerSchema>
 export type RegisterPayload = z.output<typeof registerSchema>
 export type LoginWithIdInput = z.input<typeof loginWithIdSchema>
@@ -174,3 +193,5 @@ export type RequestOtpInput = z.input<typeof requestOtpSchema>
 export type RequestOtpPayload = z.output<typeof requestOtpSchema>
 export type RevealTokenInput = z.input<typeof revealTokenSchema>
 export type RevealTokenPayload = z.output<typeof revealTokenSchema>
+export type DeleteAccountInput = z.input<typeof deleteAccountSchema>
+export type DeleteAccountPayload = z.output<typeof deleteAccountSchema>

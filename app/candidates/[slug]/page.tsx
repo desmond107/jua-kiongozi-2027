@@ -7,6 +7,7 @@ import { getCandidateNeighbours } from '@/backend/services/candidate.service'
 import { getCandidateAnalytics } from '@/backend/services/analytics.service'
 import { getSession } from '@/backend/services/session.service'
 import { spentCandidatesForUser } from '@/backend/services/token.service'
+import { citizenRatingFor } from '@/backend/services/vote.service'
 import {
   FLAG_COLOR_ORDER,
   FLAG_META,
@@ -37,7 +38,7 @@ import { formatNumber, formatPercent } from '@/frontend/lib/format'
  */
 export const dynamicParams = false
 
-/** Pre-computes the seven slugs so profile routes are known at build time. */
+/** Pre-computes the eight slugs so profile routes are known at build time. */
 export async function generateStaticParams() {
   const slugs = await candidateRepository.allSlugs().catch(() => [])
   return slugs.map((slug) => ({ slug }))
@@ -63,13 +64,14 @@ export default async function CandidateProfilePage({ params }: { params: { slug:
 
   const session = await getSession()
 
-  const [analytics, ratedIds, neighbours] = await Promise.all([
+  const [analytics, ratedIds, neighbours, existingRating] = await Promise.all([
     getCandidateAnalytics(candidate.id),
     session ? spentCandidatesForUser(session.userId) : Promise.resolve<string[]>([]),
     getCandidateNeighbours(candidate.slug),
+    // What this citizen said last time, so the widget can show it and offer to
+    // change it rather than reporting a dead end.
+    session ? citizenRatingFor(session.userId, candidate.id) : Promise.resolve(null),
   ])
-
-  const alreadyRated = ratedIds.includes(candidate.id)
 
   return (
     <PageContainer className="py-12">
@@ -219,7 +221,7 @@ export default async function CandidateProfilePage({ params }: { params: { slug:
             candidateId={candidate.id}
             candidateName={candidate.fullName}
             signedIn={Boolean(session)}
-            alreadyRated={alreadyRated}
+            existing={existingRating}
             next={neighbours.next}
             remaining={neighbours.total - ratedIds.length}
           />

@@ -223,13 +223,19 @@ describe('the full citizen journey', () => {
     expect(second.votes.NOT_SURE).toBe(1)
     expect(second.flags.ORANGE).toBe(1)
 
-    // 5. They cannot vote again.
-    await expect(
-      submitBallot(ballot(candidates[0]!.id, citizen.rawToken, 'NO', 'BLACK'), citizen.userId),
-    ).rejects.toThrow(/already rated/i)
+    // 5. They change their mind about the first candidate.
+    await submitBallot(ballot(candidates[0]!.id, citizen.rawToken, 'NO', 'BLACK'), citizen.userId)
 
-    // 6. The tally is unchanged by the attempt.
-    expect((await getSnapshot()).totals.totalVotes).toBe(2)
+    // 6. The total is unchanged — they still count once — but the vote has
+    //    moved from one column to the other, and the flag with it.
+    const revised = await getSnapshot()
+    expect(revised.totals.totalVotes).toBe(2)
+    expect(revised.totals.totalFlags).toBe(2)
+
+    const changed = revised.candidates.find((c) => c.candidateId === candidates[0]!.id)!
+    expect(changed.votes.YES).toBe(0)
+    expect(changed.votes.NO).toBe(1)
+    expect(changed.flags.BLACK).toBe(1)
 
     // 7. The exported dataset is consistent with the dashboard.
     const csv = toCsv(await getSnapshot())

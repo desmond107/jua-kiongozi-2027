@@ -10,8 +10,40 @@ export const voteRepository = {
     return (tx ?? prisma).vote.create({ data })
   },
 
-  findForUserAndCandidate(userId: string, candidateId: string): Promise<Vote | null> {
-    return prisma.vote.findUnique({
+  /**
+   * Writes this citizen's standing vote on a candidate, replacing their earlier
+   * answer if they have one.
+   *
+   * Deliberately an upsert rather than a read-then-branch: on Postgres this
+   * compiles to a single `INSERT … ON CONFLICT DO UPDATE`, so two revisions
+   * arriving at once cannot both take the insert path. The county is refreshed
+   * on update because it is denormalised from the account, and the analytics
+   * path reads it from here rather than joining back to users.
+   */
+  upsert(
+    data: { userId: string; candidateId: string; choice: VoteChoice; county: string | null },
+    tx?: Prisma.TransactionClient,
+  ): Promise<Vote> {
+    const { userId, candidateId, choice, county } = data
+
+    return (tx ?? prisma).vote.upsert({
+      where: { userId_candidateId: { userId, candidateId } },
+      create: data,
+      update: { choice, county },
+    })
+  },
+
+  /**
+   * Accepts a transaction client so a caller revising a vote and a flag
+   * together can read the previous answer INSIDE that transaction — reading
+   * outside it would see a snapshot the transaction may already have moved past.
+   */
+  findForUserAndCandidate(
+    userId: string,
+    candidateId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Vote | null> {
+    return (tx ?? prisma).vote.findUnique({
       where: { userId_candidateId: { userId, candidateId } },
     })
   },

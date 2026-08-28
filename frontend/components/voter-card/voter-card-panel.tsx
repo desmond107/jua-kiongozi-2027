@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { CheckCircle2, Info, LogOut } from 'lucide-react'
 import type { AccountStatus, RegistrationResult } from '@/backend/services/auth.service'
 import { Button } from '@/frontend/components/ui/button'
+import { DeleteAccount } from './delete-account'
 import { api } from '@/frontend/lib/api'
 import { formatDate } from '@/frontend/lib/format'
 import { useRegistrationStore } from '@/frontend/stores/registration.store'
@@ -160,6 +161,10 @@ export function VoterCardPanel({
             Sign out
           </Button>
         </div>
+
+        {/* Erasure lives last and below a rule: it is the one control here that
+            cannot be undone, so it should never sit beside the routine ones. */}
+        <DeleteAccount candidatesRated={status.candidatesRated} />
       </div>
     </div>
   )

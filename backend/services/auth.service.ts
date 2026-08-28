@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '@/backend/db/client'
 import { userRepository } from '@/backend/repositories/user.repository'
 import { tokenRepository } from '@/backend/repositories/token.repository'
+import { deletedIdentityRepository } from '@/backend/repositories/deletedIdentity.repository'
 import type { LoginPayload, LoginWithIdPayload, RegisterPayload } from '@/backend/validators'
 import {
   hashIdNumber,
@@ -49,7 +50,36 @@ export async function register(payload: RegisterPayload): Promise<RegistrationRe
   // The code is checked here but only spent once the account commits, below.
   const challengeId = await assertPhoneVerified(phone, payload.otpCode)
 
-  const existing = await userRepository.findExistingIdentity(phoneHash, idNumberHash)
+  const [existing, erased] = await Promise.all([
+    userRepository.findExistingIdentity(phoneHash, idNumberHash),
+    deletedIdentityRepository.findErased(phoneHash, idNumberHash),
+  ])
+
+  /**
+   * An erased identity may not register again.
+   *
+   * Without this, deleting an account would hand back a fresh ballot: register,
+   * rate every candidate, delete, repeat. One national ID could then cast
+   * unlimited ratings, which is precisely the guarantee this platform stakes
+   * its results on. The tombstone table exists for this check alone.
+   *
+   * Same disclosure asymmetry as below — the phone can be named because the
+   * caller just proved they hold the SIM; the ID never can.
+   */
+  if (erased.phoneErased) {
+    throw ApiError.conflict(
+      'The account for this phone number was permanently deleted at its owner’s request. ' +
+        'Deletion cannot be undone, and this number cannot be registered again.',
+      { phoneNumber: 'This number’s account was permanently deleted.' },
+    )
+  }
+
+  if (erased.idErased) {
+    throw ApiError.conflict(
+      'These details cannot be registered. If you have registered before, sign in with your ' +
+        'voting token. If you believe this is an error, contact support.',
+    )
+  }
 
   // The caller has just proven they hold this SIM, so naming the phone as the
   // duplicate tells them only a fact about their own number.
@@ -246,5 +276,108 @@ export async function accountStatus(userId: string): Promise<AccountStatus> {
     registeredAt: user.createdAt.toISOString(),
     ratedCandidateIds,
     candidatesRated: ratedCandidateIds.length,
+  }
+}
+
+/* ──────────────────────────────── erasure ───────────────────────────────── */
+
+export type DeletionReceipt = {
+  votesRemoved: number
+  flagsRemoved: number
+  tokensRemoved: number
+  deletedAt: string
+}
+
+/**
+ * Permanently erases a citizen's account and everything attached to it.
+ *
+ * WHAT GOES
+ * ─────────
+ * The user row and, by cascade, the voting token, its usage ledger, and every
+ * vote and trust flag that account ever cast. The ratings are removed from the
+ * published aggregates too — a person who withdraws consent should not still be
+ * counted in the totals, so the numbers on the transparency page can go down.
+ * That is the correct behaviour, not a defect, and the transparency page says
+ * so rather than letting a reader assume the counts only ever rise.
+ *
+ * WHAT STAYS, AND WHY
+ * ───────────────────
+ * Two hashes, in `deleted_identities`. `idNumberHash` is the sole mechanism
+ * enforcing one-citizen-one-voice; releasing it would turn this endpoint into
+ * an unlimited supply of fresh ballots for anyone willing to delete and
+ * re-register. Neither hash is reversible and neither identifies a person on
+ * its own. The deletion screen states this plainly before the citizen commits,
+ * because "permanent" here also means "you cannot register again".
+ *
+ * WHY A SESSION IS NOT ENOUGH
+ * ───────────────────────────
+ * This is the most destructive action on the platform and it cannot be undone.
+ * It therefore takes the same proof the token-reveal path takes: the phone
+ * number this account registered with, plus a fresh code sent to it. A borrowed
+ * or stolen session cannot erase somebody's participation on its own.
+ */
+export async function deleteAccount(
+  userId: string,
+  rawPhone: string,
+  otpCode: string,
+): Promise<DeletionReceipt> {
+  const user = await userRepository.findById(userId)
+  if (!user) throw ApiError.notFound('Account not found.')
+
+  // The code must have been sent to THIS account's number. Without this, a
+  // valid code for any number the caller controls would erase the session
+  // owner's account.
+  if (!hashesMatch(user.phoneHash, hashPhoneNumber(normalisePhoneNumber(rawPhone)))) {
+    throw ApiError.badRequest('That phone number does not match this account.', {
+      phoneNumber: 'This is not the number this account registered with.',
+    })
+  }
+
+  const challengeId = await assertPhoneVerified(rawPhone, otpCode)
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      // Burn the code first, inside the transaction. Two concurrent delete
+      // requests carrying the same code cannot both proceed: the loser fails
+      // here and rolls back having destroyed nothing.
+      await consumeVerifiedChallenge(challengeId, tx)
+
+      // Counted inside the transaction so the receipt reports what was actually
+      // removed rather than what happened to be there a moment earlier.
+      const [votesRemoved, flagsRemoved, tokensRemoved] = await Promise.all([
+        tx.vote.count({ where: { userId } }),
+        tx.flag.count({ where: { userId } }),
+        tx.votingToken.count({ where: { userId } }),
+      ])
+
+      // The tombstone is written BEFORE the user row goes, so there is no
+      // instant at which the identity is neither registered nor recorded as
+      // erased — which is the window a re-registration would need.
+      await deletedIdentityRepository.create(
+        { phoneHash: user.phoneHash, idNumberHash: user.idNumberHash },
+        tx,
+      )
+
+      // Cascades to voting_tokens → token_usages, votes and flags.
+      await tx.user.delete({ where: { id: userId } })
+
+      return {
+        votesRemoved,
+        flagsRemoved,
+        tokensRemoved,
+        deletedAt: new Date().toISOString(),
+      }
+    })
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      // P2025 — the row went while we were working. P2002 — a tombstone for
+      // this identity already exists. Both mean a concurrent request finished
+      // first, so the caller's goal is already met and this is not an error
+      // worth showing them as a failure.
+      if (error.code === 'P2025' || error.code === 'P2002') {
+        throw ApiError.conflict('This account has already been deleted.')
+      }
+    }
+    throw error
   }
 }

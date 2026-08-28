@@ -11,7 +11,7 @@ import { ApiError } from '@/backend/utils/http.util'
  *
  * Each card carries a small flag-distribution indicator, so the list query
  * pulls aggregate flag counts alongside the candidates rather than letting
- * seven cards each fire their own request.
+ * eight cards each fire their own request.
  */
 
 export type CandidateSummary = {
@@ -31,7 +31,7 @@ export type CandidateSummary = {
    *
    * Carried on the card because it is the figure a visitor most wants to
    * compare across candidates, and without it the grid could only be read by
-   * opening all seven profiles in turn.
+   * opening all eight profiles in turn.
    */
   approvalRate: number
 }
@@ -102,7 +102,7 @@ export type CandidateNeighbours = {
 /**
  * The candidates either side of this one, in display order.
  *
- * Exists so a profile is not a dead end. Rating all seven previously meant
+ * Exists so a profile is not a dead end. Rating all eight previously meant
  * returning to the grid between each one, which is friction on the single
  * action the whole platform is for. Wraps around, so there is always a next.
  */
@@ -134,7 +134,7 @@ export async function getCandidateBySlug(slug: string): Promise<CandidateSummary
    *
    * This used to call `listCandidates()` and discard all but one row, which
    * meant every profile page ran a full grouped tally across every candidate to
-   * answer a question about one of them. Harmless at seven candidates and a
+   * answer a question about one of them. Harmless at eight candidates and a
    * waste at any scale — and the sort of thing that never shows up until the
    * table is large.
    */

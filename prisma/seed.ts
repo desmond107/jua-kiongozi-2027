@@ -1,5 +1,5 @@
 /**
- * Seeds the seven declared / prospective 2027 presidential candidates.
+ * Seeds the eight declared / prospective 2027 presidential candidates.
  *
  * EDITORIAL RULE — read before changing anything in this file:
  * Every bio here is limited to neutral, publicly documented facts: offices held,
@@ -93,6 +93,15 @@ const CANDIDATES: CandidateSeed[] = [
     orderIndex: 7,
     photoUrl: '/candidates/david-maraga.jpg',
     bio: 'David Maraga served as Chief Justice of Kenya and President of the Supreme Court from 2016 until his retirement in 2021, presiding over the bench that annulled the August 2017 presidential election. He read law at the University of Nairobi and the Kenya School of Law, joined the judiciary as a magistrate in 1987, and sat as a High Court judge from 2003 and at the Court of Appeal from 2012.',
+  },
+  {
+    slug: 'edwin-sifuna',
+    fullName: 'Edwin Watenya Sifuna',
+    party: 'Orange Democratic Movement',
+    role: 'Senator for Nairobi County',
+    orderIndex: 8,
+    photoUrl: '/candidates/edwin-sifuna.jpg',
+    bio: 'Edwin Watenya Sifuna is an advocate of the High Court of Kenya who read law at the University of Nairobi and practised as a partner at the firm E. Sifuna & Associates Advocates. He has served as Secretary-General of the Orange Democratic Movement since March 2020, and was elected Senator for Nairobi County at the August 2022 general election. He was born in May 1982.',
   },
 ]
 

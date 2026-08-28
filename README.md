@@ -44,7 +44,7 @@ cp .env.example .env
 #    Fill in DATABASE_URL, then generate each secret:
 #    openssl rand -base64 48
 
-# 3. Create the schema and seed the seven candidates
+# 3. Create the schema and seed the eight candidates
 npm run db:migrate
 npm run db:seed
 
@@ -70,7 +70,7 @@ createdb jua_kiongozi_2027
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run db:migrate` | Create and apply a migration (development) |
 | `npm run db:deploy` | Apply existing migrations (production/CI) |
-| `npm run db:seed` | Seed or refresh the seven candidates (idempotent) |
+| `npm run db:seed` | Seed or refresh the eight candidates (idempotent) |
 | `npm run db:studio` | Prisma Studio |
 | `npm run db:reset` | **Drops all data**, re-migrates, re-seeds |
 | `npm run admin:create` | Create or rotate an operator for the `/admin` console |
@@ -291,10 +291,20 @@ The integrity guarantees live in the database, not only in application code:
 | `User.idNumberHash` unique | One account per national ID |
 | `Vote @@unique([userId, candidateId])` | One vote per citizen per candidate |
 | `Flag @@unique([userId, candidateId])` | One flag per citizen per candidate |
-| `TokenUsage @@unique([tokenId, candidateId])` | A token can never be replayed against a candidate |
+| `TokenUsage @@unique([tokenId, candidateId])` | One ledger row per candidate a token is spent on |
 
 Application-level checks exist too, but only to produce friendly error messages. The constraints
 above are what hold under two simultaneous requests.
+
+**What "one rating" caps is voices, not submissions.** A citizen may go back and change their vote
+and trust flag on a candidate. The submission upserts against the constraints above, so a revision
+updates the row that is already there — it never creates a second one, and it never adds a second
+`TokenUsage`. The totals therefore count each citizen exactly once per candidate while reflecting
+what they currently think. Revising still requires the raw token, exactly like a first rating.
+
+The alternative — refusing changes — was not the safer option it looks like. It published stale
+sentiment as though it were current, and left "delete the account and register again" as the only
+way to correct an answer, which the `deleted_identities` tombstone deliberately blocks.
 
 ---
 
@@ -332,7 +342,8 @@ database still cannot brute-force the ~8-digit Kenyan ID space, because the key 
    replace a token they cannot read.
 4. Handed to the Voter Card screen through an in-memory Zustand store, never via the URL (which
    lands in history, logs and referrer headers) or `localStorage` (which persists indefinitely).
-5. Spent per candidate, recorded permanently in `TokenUsage`.
+5. Spent per candidate, recorded permanently in `TokenUsage` — once per candidate, however many
+   times the citizen revises that rating.
 
 ### Defence in depth
 
@@ -588,7 +599,7 @@ next/font was fetching the full variable range including the SOFT and WONK axes.
 
 **A profile page tallied the whole table.** `getCandidateBySlug` called `listCandidates()` and threw
 away all but one row — a grouped tally across every candidate to answer a question about one. Now a
-single-candidate count. Harmless at seven candidates; not at scale.
+single-candidate count. Harmless at eight candidates; not at scale.
 
 ### Still on the table
 
@@ -679,7 +690,7 @@ rebuild before their page resolves. This is a deliberate trade — see
 
 The editorial rules at the top of the seed file are not decoration. Bios carry publicly documented
 facts only, no attributed quotes, no editorialising, and identical structure and length across all
-seven, so no candidate reads as more prominently covered than another.
+eight, so no candidate reads as more prominently covered than another.
 
 ### Replacing the hero art
 
@@ -733,7 +744,7 @@ line coverage. If the published numbers can be forged, nothing else about this c
 | `tests/unit/crypto` | Token entropy and unpredictability, hash determinism and domain separation, phone/ID normalisation, AES-GCM round-trip and tamper rejection, constant-time comparison |
 | `tests/unit/validators` | The schemas shared by the forms and the API, including that the flag ramp stays monotonically darkening so its ordering survives colour blindness |
 | `tests/integration/registration` | One account per phone and per national ID — including the same ID written differently — OTP consumption, transaction rollback, and that the ID is never named as the duplicate |
-| `tests/integration/voting` | One rating per citizen per candidate, token→account binding, revoked tokens, and the vote/flag endpoints used independently |
+| `tests/integration/voting` | One rating per citizen per candidate, revising a rating in place, token→account binding, revoked tokens, and the vote/flag endpoints used independently |
 | `tests/integration/analytics` | Aggregate arithmetic, county rollups, CSV formula-injection escaping, and that no public payload contains anything personal |
 | `tests/integration/token-reveal` | That retrieving a token always requires control of the registered phone, that codes are single-use, and that one citizen can never reveal another's token |
 

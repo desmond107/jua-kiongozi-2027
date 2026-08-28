@@ -20,7 +20,12 @@ export async function resetDatabase(): Promise<void> {
   await prisma.$executeRawUnsafe(`
     TRUNCATE TABLE
       token_usages, votes, flags, voting_tokens,
-      phone_verifications, rate_limits, users, candidates
+      phone_verifications, rate_limits, users, candidates,
+      -- Tombstones outlive the users they replace, so they must be cleared
+      -- here too. A leftover row silently blocks re-registration of a test
+      -- identity, which surfaces later as an unrelated suite failing to
+      -- register rather than as a problem with this table.
+      deleted_identities
     RESTART IDENTITY CASCADE
   `)
 }

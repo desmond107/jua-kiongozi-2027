@@ -50,7 +50,7 @@ export default async function CandidatesPage() {
       <CandidateGrid candidates={candidates} ratedIds={ratedIds} signedIn={Boolean(session)} />
 
       {/* Compact overview — the same data as the cards, ordered and scannable
-          in one column for anyone who does not want to read seven cards. */}
+          in one column for anyone who does not want to read eight cards. */}
       <section className="mt-16 space-y-4">
         <h2 className="font-display text-xl font-semibold text-bone">At a glance</h2>
         <ul className="glass divide-y divide-white/[0.07] p-0">

@@ -14,7 +14,8 @@ export const dynamic = 'force-dynamic'
  *
  * Records a trust flag on its own. The product UI submits flags through
  * `/api/vote` alongside the sentiment vote; this endpoint exists so the two can
- * be submitted independently.
+ * be submitted independently. Re-flagging a candidate changes the standing
+ * flag; it does not add a second one.
  */
 export async function POST(request: NextRequest) {
   return handle(async () => {
@@ -52,6 +53,7 @@ export async function POST(request: NextRequest) {
     revalidatePath('/candidates')
     revalidatePath('/')
 
-    return ok(receipt, { status: 201 })
+    // 200 on a revision, 201 on a first flag — see /api/vote.
+    return ok(receipt, { status: receipt.revised ? 200 : 201 })
   })
 }

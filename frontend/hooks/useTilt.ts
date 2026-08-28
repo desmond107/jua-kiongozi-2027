@@ -16,7 +16,7 @@ type TiltOptions = {
  *
  * Built on Framer Motion values rather than React state so the transform is
  * written straight to the compositor — pointer movement never triggers a React
- * re-render, which is what keeps this smooth on a seven-card grid.
+ * re-render, which is what keeps this smooth on an eight-card grid.
  *
  * Returns inert values when reduced motion is requested; the card then renders
  * flat with no listeners attached.

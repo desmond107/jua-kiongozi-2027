@@ -30,12 +30,12 @@ const STEPS = [
   {
     step: '04',
     title: 'You rate a candidate',
-    body: 'You submit one sentiment vote and one trust flag together. The server re-hashes the token you present, matches it against the stored hash, confirms it belongs to your account, and confirms it has not already been spent on that candidate.',
+    body: 'You submit one sentiment vote and one trust flag together. The server re-hashes the token you present, matches it against the stored hash, confirms it belongs to your account, and looks up whether you have rated this candidate before.',
   },
   {
     step: '05',
-    title: 'The token is spent',
-    body: 'That candidate is recorded against your token permanently. You can go on to rate the other candidates, but you can never rate the same candidate twice. This is enforced by a uniqueness constraint in the database itself, not merely by application code — so it holds even under two simultaneous requests.',
+    title: 'The token is spent — and you can still change your mind',
+    body: 'That candidate is recorded against your token permanently, and you hold exactly one vote and one trust flag for them. If you come back and rate them again, that single answer is replaced rather than duplicated: your token is required once more, and the totals move without you counting twice. The one-answer-per-candidate rule is enforced by a uniqueness constraint in the database itself, not merely by application code — so it holds even under two simultaneous requests.',
   },
   {
     step: '06',

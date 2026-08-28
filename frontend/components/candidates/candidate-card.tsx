@@ -16,7 +16,7 @@ import { FlagBar } from './flag-bar'
  * The whole card is a single link rather than a div containing one, so the
  * entire surface is one keyboard stop and one screen-reader target. The tilt is
  * driven by Framer Motion values (see useTilt), so pointer movement never
- * triggers a React render — which is what keeps a seven-card grid smooth.
+ * triggers a React render — which is what keeps an eight-card grid smooth.
  */
 export function CandidateCard({
   candidate,
@@ -91,7 +91,7 @@ export function CandidateCard({
               {/*
                 Approval is the figure a visitor most wants to compare across
                 candidates, and the grid previously did not carry it at all —
-                you had to open all seven profiles to rank them. Shown as a
+                you had to open all eight profiles to rank them. Shown as a
                 labelled number rather than another colour band, so it reads at
                 a glance and does not depend on the legend.
               */}
