@@ -64,7 +64,7 @@ createdb jua_kiongozi_2027
 | Script | Does |
 |---|---|
 | `npm run dev` | Development server |
-| `npm run build` | `prisma generate` + `migrate deploy` + production build (no seed) |
+| `npm run build` | `prisma generate` + production build (no migrations, no seed) |
 | `npm run start` | Serve the production build |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` |
@@ -208,15 +208,29 @@ hop count here would read the wrong end of a header Vercel already normalised.
 **3. `SMS_PROVIDER` is required.** Without it, `/api/auth/request-otp` returns 503 and nobody can
 register — the app refuses to hand out accounts it cannot gate. The rest of the site still works.
 
-### The build applies migrations, but does not seed
+### The build neither migrates nor seeds
 
 ```
-prisma generate && prisma migrate deploy && next build
+prisma generate && next build
 ```
 
-`migrate deploy` is what creates the tables. Without it a correctly configured `DATABASE_URL` still
-yields a schema-less database, and every page that reads it throws. It never generates new
-migrations and never drops data, so it is safe to run on every deploy.
+**Migrations run in CI, not in the build.** `.github/workflows/migrate.yml` applies them on any push
+to `main` that touches `prisma/migrations/`, reading the `PROD_DATABASE_URL` and `PROD_DIRECT_URL`
+repository secrets. Both are needed even though only the direct one is dialled: Prisma validates the
+whole datasource block up front and fails with `P1012` if either is missing.
+
+They used to run inside `npm run build`. That coupled two unrelated failures — any transient
+inability to reach the database (a Neon cold start, a suspended compute, an IP allowlist) failed the
+entire deployment with `P1001`, even when the compiled output was perfectly fine. Now a database
+problem fails one clearly-labelled workflow and leaves the deploy alone.
+
+`migrate deploy` never generates new migrations and never drops data, so it is safe to re-run. The
+workflow is `workflow_dispatch`-able for the cases the path filter misses.
+
+**One caveat worth knowing.** The migration workflow and Vercel's build both start from the same
+push and run in parallel, so nothing orders them. That is fine for additive migrations. For a
+breaking change — dropping or renaming a column the running code still reads — split it across two
+deploys: dispatch the migration manually and let it finish, then push the code that depends on it.
 
 **Seeding is deliberately not part of the build.** The seed upserts, and its `update` branch rewrites
 every candidate field — so running it on each deploy would silently revert any candidate copy edited

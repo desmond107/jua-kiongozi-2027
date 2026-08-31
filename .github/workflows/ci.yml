@@ -51,9 +51,10 @@ jobs:
         run: npm run lint
 
       - name: Build
-        # The default build script runs migrate+seed against a live database;
-        # CI has no deploy target, so only the compile step is exercised here.
-        run: npx next build
+        # Runs the real build command rather than a stand-in. That is only safe
+        # because `build` no longer applies migrations — it is now purely a
+        # compile, so it needs no database. Migrations moved to migrate.yml.
+        run: npm run build
 
   test:
     name: Tests

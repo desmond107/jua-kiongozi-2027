@@ -1,0 +1,58 @@
+name: Migrate production
+
+# Migrations used to run inside the Vercel build (`prisma migrate deploy` was
+# part of the `build` script). That coupled two failures that have nothing to do
+# with each other: any transient inability to reach the database — a Neon cold
+# start, a suspended compute, an IP allowlist — failed the whole deployment,
+# even when the compiled output was perfectly fine.
+#
+# This lives in its own workflow rather than as a job in ci.yml on purpose.
+# ci.yml sets `cancel-in-progress: true`, which is right for typecheck and tests
+# but actively dangerous here: a second push would cancel an in-flight run and
+# could kill `migrate deploy` partway through a migration.
+
+on:
+  push:
+    branches: [main]
+    # Migrations only ever live here, so pushes that touch nothing else have no
+    # work to do. Skipping them also avoids waking the Neon compute on every
+    # commit. `workflow_dispatch` below is the escape hatch if a migration ever
+    # needs replaying without a matching push.
+    paths:
+      - 'prisma/migrations/**'
+  workflow_dispatch:
+
+# Serialize, and never cancel. Two concurrent `migrate deploy` runs would
+# contend on the same advisory lock, and a cancelled one is worse than a slow
+# one.
+concurrency:
+  group: migrate-production
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: Apply migrations
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Apply migrations
+        # No `prisma generate` first: `migrate deploy` reads schema.prisma and
+        # the migrations directory directly, and never touches the generated
+        # client.
+        #
+        # Both URLs are set even though only DIRECT_URL is used to connect.
+        # Prisma validates the whole datasource block up front and fails with
+        # P1012 if either env var is missing.
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.PROD_DIRECT_URL }}
