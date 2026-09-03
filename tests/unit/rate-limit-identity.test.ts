@@ -11,11 +11,18 @@ import type { NextRequest } from 'next/server'
  * not protect the citizen.
  */
 
-const req = (init: { ip?: string; xff?: string }) =>
-  ({
-    ip: init.ip,
-    headers: new Headers(init.xff ? { 'x-forwarded-for': init.xff } : {}),
-  }) as unknown as NextRequest
+/**
+ * `ip` is the address the platform attached to the request. Next 15 removed
+ * `NextRequest.ip`, so on Vercel that value now arrives as the `x-real-ip`
+ * header — set by the edge, never by the caller. The distinction these tests
+ * turn on is unchanged: `x-real-ip` is trustworthy, `x-forwarded-for` is not.
+ */
+const req = (init: { ip?: string; xff?: string }) => {
+  const headers = new Headers()
+  if (init.ip) headers.set('x-real-ip', init.ip)
+  if (init.xff) headers.set('x-forwarded-for', init.xff)
+  return { headers } as unknown as NextRequest
+}
 
 describe('ipLimitingAvailable', () => {
   it('is true when the platform supplies the IP', () => {

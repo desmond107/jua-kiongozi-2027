@@ -10,10 +10,11 @@ export const revalidate = 60
  */
 export async function GET(
   _request: Request,
-  { params }: { params: { candidateId: string } },
+  { params }: { params: Promise<{ candidateId: string }> },
 ) {
   return handle(async () => {
-    const analytics = await getCandidateAnalytics(params.candidateId)
+    const { candidateId } = await params
+    const analytics = await getCandidateAnalytics(candidateId)
     return ok(analytics)
   })
 }

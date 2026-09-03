@@ -1,4 +1,4 @@
-import { existsSync, statSync } from 'node:fs'
+import { existsSync, readFileSync, statSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
@@ -98,7 +98,6 @@ describe('clip assets', () => {
     // First box of an MP4 is 'ftyp' at offset 4. Guards against a stray
     // placeholder or a truncated upload being shipped as a video.
     const file = resolve(PUBLIC_DIR, src.replace(/^\//, ''))
-    const { readFileSync } = require('node:fs') as typeof import('node:fs')
     const head = readFileSync(file).subarray(4, 8).toString('latin1')
     expect(head).toBe('ftyp')
   })
@@ -108,7 +107,6 @@ describe('clip assets', () => {
     expect(existsSync(file), `${poster} is missing from /public`).toBe(true)
 
     // JPEG magic number: FF D8 FF.
-    const { readFileSync } = require('node:fs') as typeof import('node:fs')
     const head = readFileSync(file).subarray(0, 3)
     expect([head[0], head[1], head[2]]).toEqual([0xff, 0xd8, 0xff])
   })

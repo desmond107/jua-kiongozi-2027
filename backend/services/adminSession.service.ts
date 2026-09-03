@@ -69,7 +69,7 @@ export async function readAdminToken(token: string): Promise<AdminClaims | null>
 export async function setAdminSessionCookie(claims: AdminClaims): Promise<void> {
   const token = await createAdminToken(claims)
 
-  cookies().set(ADMIN_SESSION_COOKIE_NAME, token, {
+  ;(await cookies()).set(ADMIN_SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     secure: env.isProduction,
     // Strict, not Lax. The citizen session is Lax so that following a link into
@@ -82,8 +82,8 @@ export async function setAdminSessionCookie(claims: AdminClaims): Promise<void> 
   })
 }
 
-export function clearAdminSessionCookie(): void {
-  cookies().set(ADMIN_SESSION_COOKIE_NAME, '', {
+export async function clearAdminSessionCookie(): Promise<void> {
+  ;(await cookies()).set(ADMIN_SESSION_COOKIE_NAME, '', {
     httpOnly: true,
     secure: env.isProduction,
     sameSite: 'strict',
@@ -94,7 +94,7 @@ export function clearAdminSessionCookie(): void {
 
 /** Current operator session, or null. Safe to call from Server Components. */
 export async function getAdminSession(): Promise<AdminClaims | null> {
-  const cookie = cookies().get(ADMIN_SESSION_COOKIE_NAME)
+  const cookie = (await cookies()).get(ADMIN_SESSION_COOKIE_NAME)
   if (!cookie?.value) return null
   return readAdminToken(cookie.value)
 }

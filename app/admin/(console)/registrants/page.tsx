@@ -41,12 +41,15 @@ function formatDate(value: Date): string {
 export default async function AdminRegistrantsPage({
   searchParams,
 }: {
-  searchParams: Record<string, string | string[] | undefined>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
+  const resolvedSearchParams = await searchParams
   const parsed = registrantQuerySchema.safeParse({
-    county: typeof searchParams.county === 'string' ? searchParams.county : undefined,
-    search: typeof searchParams.search === 'string' ? searchParams.search : undefined,
-    page: typeof searchParams.page === 'string' ? searchParams.page : 1,
+    county:
+      typeof resolvedSearchParams.county === 'string' ? resolvedSearchParams.county : undefined,
+    search:
+      typeof resolvedSearchParams.search === 'string' ? resolvedSearchParams.search : undefined,
+    page: typeof resolvedSearchParams.page === 'string' ? resolvedSearchParams.page : 1,
   })
 
   // An unparseable query string falls back to the unfiltered first page rather

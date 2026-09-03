@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic'
  */
 export async function POST() {
   return handle(async () => {
-    clearAdminSessionCookie()
+    await clearAdminSessionCookie()
     return ok({ signedOut: true })
   })
 }

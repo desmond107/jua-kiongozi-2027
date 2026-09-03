@@ -1,6 +1,19 @@
+import { dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   poweredByHeader: false,
+
+  /**
+   * Pin the file-tracing root to this project.
+   *
+   * Next infers the root by looking for lockfiles, and an unrelated
+   * package-lock.json further up the filesystem makes it pick that directory
+   * instead — it then traces the wrong tree when deciding which files to bundle
+   * into each serverless function. Stating the root removes the guesswork.
+   */
+  outputFileTracingRoot: dirname(fileURLToPath(import.meta.url)),
 
   experimental: {
     /**

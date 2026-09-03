@@ -10,10 +10,14 @@ export const revalidate = 60
  * Accepts either a cuid or a slug, so links can stay human-readable
  * (`/api/candidates/martha-karua`) without needing a second endpoint.
  */
-export async function GET(_request: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   return handle(async () => {
-    const byId = await candidateRepository.findById(params.id)
-    const slug = byId?.slug ?? params.id
+    const { id } = await params
+    const byId = await candidateRepository.findById(id)
+    const slug = byId?.slug ?? id
 
     const candidate = await getCandidateBySlug(slug).catch(() => null)
     if (!candidate) throw ApiError.notFound('That candidate could not be found.')

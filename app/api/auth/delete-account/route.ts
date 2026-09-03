@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     // The session now points at a row that no longer exists. Clearing the cookie
     // here means the browser is signed out the moment the response lands, rather
     // than carrying a token for a deleted account until it expires.
-    clearSessionCookie()
+    await clearSessionCookie()
 
     // Their ratings were counted in the published aggregates and no longer are,
     // so the cached snapshot is stale the instant this returns. Same

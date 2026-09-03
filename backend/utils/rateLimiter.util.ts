@@ -148,6 +148,22 @@ export async function consumeRateLimit(
 }
 
 /**
+ * The address the PLATFORM attached to this request, or undefined.
+ *
+ * Next 15 removed `NextRequest.ip`. On Vercel the same value now arrives as the
+ * `x-real-ip` header — this is exactly what Vercel's own `ipAddress()` helper
+ * reads, and the edge overwrites it on the way in, so it is set by the platform
+ * rather than by the caller. That distinction is the whole point: it is the one
+ * address in the request a client cannot choose for itself.
+ *
+ * Off Vercel the header is simply absent and the callers below fall through to
+ * the TRUSTED_PROXY_HOPS path, which is the behaviour they had before.
+ */
+function platformIp(request: NextRequest): string | undefined {
+  return request.headers.get('x-real-ip') ?? undefined
+}
+
+/**
  * Whether this process can actually tell one client from another.
  *
  * When it cannot, IP-keyed limiting is not merely weak — it is actively
@@ -156,7 +172,7 @@ export async function consumeRateLimit(
  * that state rather than apply a control that punishes the innocent.
  */
 export function ipLimitingAvailable(request: NextRequest): boolean {
-  if (request.ip) return true
+  if (platformIp(request)) return true
 
   const hops = Number(process.env.TRUSTED_PROXY_HOPS ?? '')
   return Number.isInteger(hops) && hops > 0
@@ -181,7 +197,7 @@ let warnedAboutClientIp = false
  * configuration (`TRUSTED_PROXY_HOPS`), not a default.
  *
  * Order of preference:
- *   1. `request.ip` — populated by the platform (Vercel), never by the client.
+ *   1. `x-real-ip` — populated by the platform (Vercel), never by the client.
  *   2. The Nth-from-right XFF entry, only when TRUSTED_PROXY_HOPS says how many
  *      proxies to skip.
  *   3. A single shared bucket. Deliberately NOT a per-request unique value: an
@@ -190,7 +206,8 @@ let warnedAboutClientIp = false
  *      values the caller cannot rotate freely, are the ones that bite.
  */
 export function clientIp(request: NextRequest): string {
-  if (request.ip) return request.ip
+  const platform = platformIp(request)
+  if (platform) return platform
 
   const hops = Number(process.env.TRUSTED_PROXY_HOPS ?? '')
 

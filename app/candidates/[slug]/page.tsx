@@ -47,9 +47,10 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }): Promise<Metadata> {
-  const candidate = await candidateRepository.findBySlug(params.slug)
+  const { slug } = await params
+  const candidate = await candidateRepository.findBySlug(slug)
   if (!candidate) return { title: 'Candidate not found' }
 
   return {
@@ -58,8 +59,13 @@ export async function generateMetadata({
   }
 }
 
-export default async function CandidateProfilePage({ params }: { params: { slug: string } }) {
-  const candidate = await candidateRepository.findBySlug(params.slug)
+export default async function CandidateProfilePage({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}) {
+  const { slug } = await params
+  const candidate = await candidateRepository.findBySlug(slug)
   if (!candidate) notFound()
 
   const session = await getSession()

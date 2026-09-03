@@ -61,7 +61,7 @@ export async function readSessionToken(token: string): Promise<SessionClaims | n
 export async function setSessionCookie(claims: SessionClaims): Promise<void> {
   const token = await createSessionToken(claims)
 
-  cookies().set(SESSION_COOKIE_NAME, token, {
+  ;(await cookies()).set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     secure: env.isProduction,
     sameSite: 'lax',
@@ -70,8 +70,8 @@ export async function setSessionCookie(claims: SessionClaims): Promise<void> {
   })
 }
 
-export function clearSessionCookie(): void {
-  cookies().set(SESSION_COOKIE_NAME, '', {
+export async function clearSessionCookie(): Promise<void> {
+  ;(await cookies()).set(SESSION_COOKIE_NAME, '', {
     httpOnly: true,
     secure: env.isProduction,
     sameSite: 'lax',
@@ -82,7 +82,7 @@ export function clearSessionCookie(): void {
 
 /** Current session, or null. Safe to call from Server Components. */
 export async function getSession(): Promise<SessionClaims | null> {
-  const cookie = cookies().get(SESSION_COOKIE_NAME)
+  const cookie = (await cookies()).get(SESSION_COOKIE_NAME)
   if (!cookie?.value) return null
   return readSessionToken(cookie.value)
 }

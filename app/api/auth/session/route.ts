@@ -18,7 +18,7 @@ export async function GET() {
       // out", not a server fault, so the stale cookie is dropped rather than
       // left to fail on every subsequent request.
       if (error instanceof ApiError && error.status === 404) {
-        clearSessionCookie()
+        await clearSessionCookie()
         return ok(null)
       }
       throw error
@@ -29,7 +29,7 @@ export async function GET() {
 /** DELETE /api/auth/session — sign out. */
 export async function DELETE() {
   return handle(async () => {
-    clearSessionCookie()
+    await clearSessionCookie()
     return ok({ signedOut: true })
   })
 }
