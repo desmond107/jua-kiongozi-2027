@@ -27,7 +27,7 @@ export default function GlobalError({
   return (
     <PageContainer className="py-24">
       <div className="glass mx-auto max-w-lg space-y-5 p-8 text-center">
-        <AlertTriangle className="mx-auto h-10 w-10 text-gold" aria-hidden />
+        <AlertTriangle className="mx-auto h-10 w-10 text-flame" aria-hidden />
         <h1 className="font-display text-2xl font-semibold text-bone">Something went wrong</h1>
         <p className="text-sm leading-relaxed text-bone-muted">
           We hit an unexpected problem loading this page. Your registration and any ratings you have

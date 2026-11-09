@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import Image from 'next/image'
 import { motion } from 'framer-motion'
 import QRCode from 'qrcode'
 import { Check, Copy, Download, Eye, EyeOff, ShieldAlert } from 'lucide-react'
@@ -53,7 +54,7 @@ export function VoterCardDisplay({
     QRCode.toDataURL(verifyUrl, {
       width: 240,
       margin: 1,
-      color: { dark: '#0A0E1A', light: '#F7F5F0' },
+      color: { dark: '#101011', light: '#FAF9F6' },
       errorCorrectionLevel: 'M',
     })
       .then(setQr)
@@ -141,7 +142,7 @@ export function VoterCardDisplay({
             aria-hidden
           />
           <span
-            className="pointer-events-none absolute -bottom-20 -left-10 h-56 w-56 rounded-full bg-gold/15 blur-3xl"
+            className="pointer-events-none absolute -bottom-20 -left-10 h-56 w-56 rounded-full bg-flame/15 blur-3xl"
             aria-hidden
           />
 
@@ -151,7 +152,7 @@ export function VoterCardDisplay({
                 <Emblem className="h-8 w-8" />
                 <div>
                   <p className="font-display text-sm font-semibold leading-tight text-bone">
-                    Jua Kiongozi <span className="text-gold">’27</span>
+                    Jua Kiongozi <span className="text-flame">’27</span>
                   </p>
                   <p className="text-[10px] uppercase tracking-[0.18em] text-bone-dim">
                     Voter Card
@@ -160,8 +161,12 @@ export function VoterCardDisplay({
               </div>
 
               {qr ? (
-                <img
+                <Image
                   src={qr}
+                  // A locally generated data: URL — there is nothing to optimise.
+                  unoptimized
+                  width={72}
+                  height={72}
                   alt={`QR code linking to the sign-in page for card ${data.serial}`}
                   className="h-16 w-16 rounded-lg border border-white/20 sm:h-[72px] sm:w-[72px]"
                 />
@@ -200,18 +205,16 @@ export function VoterCardDisplay({
       </div>
 
       {displayToken ? (
-        <div className="glass space-y-4 border-gold/25 p-5">
+        <div className="glass space-y-4 border-flame/25 p-5">
           <div className="flex items-start gap-2.5">
-            <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-gold" aria-hidden />
+            <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-flame" aria-hidden />
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-bone">
-                Save this token now
-              </p>
+              <p className="text-sm font-semibold text-bone">Save this token now</p>
               <p className="text-xs leading-relaxed text-bone-dim">
                 Keep it as private as a password — anyone holding it can rate candidates in your
-                name. You can retrieve it later from this page while you are signed in, by
-                verifying your phone again. If you lose it entirely, sign in with your national ID
-                number instead and retrieve it from here.
+                name. You can retrieve it later from this page while you are signed in, by verifying
+                your phone again. If you lose it entirely, sign in with your national ID number
+                instead and retrieve it from here.
               </p>
             </div>
           </div>

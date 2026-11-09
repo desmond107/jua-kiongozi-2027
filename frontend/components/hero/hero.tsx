@@ -1,6 +1,5 @@
 'use client'
 
-import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -9,18 +8,8 @@ import { Button } from '@/frontend/components/ui/button'
 import { useDeviceCapability } from '@/frontend/hooks/useDeviceCapability'
 import { formatNumber } from '@/frontend/lib/format'
 import { HeroCarousel } from './hero-carousel'
+import { HeroVideo } from './hero-video'
 import { HERO_PHRASES, nextClipIndex } from './hero-video.constants'
-
-/**
- * Same treatment for the video backdrop, and for a stronger reason: it must
- * never render during SSR, because the server has no idea whether this visitor
- * is on wifi or on a metered handset. Deciding on the client keeps the initial
- * HTML identical for everyone and the capability probe authoritative.
- */
-const HeroVideo = dynamic(() => import('./hero-video'), {
-  ssr: false,
-  loading: () => null,
-})
 
 type HeroProps = {
   registeredVoters: number
@@ -37,14 +26,21 @@ const rise = {
 }
 
 export function Hero({ registeredVoters, totalVotes }: HeroProps) {
-  const { canPlayVideo, canAnimate } = useDeviceCapability()
+  const { canPlayVideo, canAnimate, probing } = useDeviceCapability()
 
   // Set when every clip has failed to load, or autoplay was refused. Once true
   // the illustrated carousel takes over permanently rather than retrying.
   const [videoUnavailable, setVideoUnavailable] = useState(false)
   const [phrase, setPhrase] = useState(0)
 
-  const showVideo = canPlayVideo && !videoUnavailable
+  /**
+   * The footage is the default, from the very first paint. While the capability
+   * probe is still running (SSR and the first client render) the video player
+   * is mounted, so its poster frame is in the server HTML and the clip starts
+   * the moment the client is ready. The illustrated carousel only takes over
+   * once the probe has actually ruled video out, or playback has failed.
+   */
+  const showVideo = (probing || canPlayVideo) && !videoUnavailable
 
   /**
    * The headline turns over WITH the footage, not on a clock of its own — the
@@ -104,10 +100,10 @@ export function Hero({ registeredVoters, totalVotes }: HeroProps) {
       <div className="relative z-20 mx-auto w-full max-w-6xl px-5 py-24 sm:px-8">
         <div className="max-w-2xl">
           <motion.div variants={rise} initial="hidden" animate="visible" custom={0}>
-            <span className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-ink-900/85 px-4 py-1.5 text-xs font-medium tracking-wide text-gold-soft backdrop-blur-md">
+            <span className="inline-flex items-center gap-2 rounded-full border border-flame/40 bg-ink-900/85 px-4 py-1.5 text-xs font-medium tracking-wide text-flame-soft backdrop-blur-md">
               <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-gold" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-gold" />
+                <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-flame" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-flame" />
               </span>
               Independent civic platform · Not affiliated with the IEBC
             </span>

@@ -11,16 +11,17 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Primary CTA: the gold accent, used sparingly — usually once per view.
+        // Primary CTA: the flag's red, used sparingly — usually once per view.
+        // A hairline of white on top echoes the flag's fimbriation.
         primary:
-          'bg-gradient-to-br from-gold-soft to-gold text-ink-900 shadow-glow-gold hover:brightness-110 active:scale-[0.98]',
+          'bg-gradient-to-br from-flame-deep to-flame-ember text-bone shadow-glow-flame ring-1 ring-inset ring-white/15 hover:brightness-125 active:scale-[0.98]',
         verdant:
-          'bg-gradient-to-br from-verdant-soft to-verdant text-ink-900 shadow-glow-verdant hover:brightness-110 active:scale-[0.98]',
+          'bg-gradient-to-br from-verdant to-verdant-deep text-bone shadow-glow-verdant ring-1 ring-inset ring-white/15 hover:brightness-110 active:scale-[0.98]',
         glass:
           'border border-white/15 bg-white/[0.06] text-bone backdrop-blur-xl hover:border-white/30 hover:bg-white/[0.1] active:scale-[0.98]',
         ghost: 'text-bone-muted hover:bg-white/[0.06] hover:text-bone',
-        danger: 'bg-flame/90 text-bone hover:bg-flame active:scale-[0.98]',
-        link: 'text-gold underline-offset-4 hover:underline',
+        danger: 'bg-flame-deep text-bone hover:brightness-125 active:scale-[0.98]',
+        link: 'text-flame underline-offset-4 hover:underline',
       },
       size: {
         sm: 'h-9 px-4 text-sm',
@@ -34,14 +35,16 @@ const buttonVariants = cva(
 )
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   asChild?: boolean
   loading?: boolean
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, loading = false, children, disabled, ...props }, ref) => {
+  (
+    { className, variant, size, asChild = false, loading = false, children, disabled, ...props },
+    ref,
+  ) => {
     const Comp = asChild ? Slot : 'button'
 
     return (

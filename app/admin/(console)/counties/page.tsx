@@ -1,7 +1,12 @@
 import { getCountyAnalysis } from '@/backend/services/admin.service'
 import { ExportButtons } from '@/frontend/components/admin/export-buttons'
 import { FlagIcon } from '@/frontend/components/ui/flag-icon'
-import { FLAG_COLOR_ORDER, FLAG_META, VOTE_CHOICE_ORDER, VOTE_CHOICE_LABELS } from '@/backend/validators'
+import {
+  FLAG_COLOR_ORDER,
+  FLAG_META,
+  VOTE_CHOICE_ORDER,
+  VOTE_CHOICE_LABELS,
+} from '@/backend/validators'
 import { formatNumber } from '@/frontend/lib/format'
 
 export const dynamic = 'force-dynamic'
@@ -28,7 +33,7 @@ export default async function AdminCountiesPage() {
       </header>
 
       {analysis.unrepresented.length > 0 ? (
-        <p className="rounded-2xl border border-gold/20 bg-gold/[0.05] p-4 text-sm leading-relaxed text-bone-muted">
+        <p className="rounded-2xl border border-flame/20 bg-flame/[0.05] p-4 text-sm leading-relaxed text-bone-muted">
           <strong className="font-semibold text-bone">
             {analysis.unrepresented.length} of 47 counties have no registrations yet:
           </strong>{' '}
@@ -50,7 +55,9 @@ export default async function AdminCountiesPage() {
           <table className="w-full min-w-[640px] border-collapse text-sm">
             <thead>
               <tr className="border-b border-white/10 text-left">
-                <th scope="col" className="px-5 py-3 font-medium text-bone-muted">County</th>
+                <th scope="col" className="px-5 py-3 font-medium text-bone-muted">
+                  County
+                </th>
                 <th scope="col" className="px-3 py-3 text-right font-medium text-bone-muted">
                   Registered
                 </th>
@@ -105,9 +112,7 @@ export default async function AdminCountiesPage() {
       <section className="glass overflow-hidden p-0">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 p-5 sm:p-6">
           <div>
-            <h2 className="font-display text-lg font-semibold text-bone">
-              Candidate by county
-            </h2>
+            <h2 className="font-display text-lg font-semibold text-bone">Candidate by county</h2>
             <p className="mt-1 text-sm text-bone-dim">
               Every county and candidate pairing that has at least one rating.
             </p>
@@ -122,8 +127,12 @@ export default async function AdminCountiesPage() {
           <table className="w-full min-w-[860px] border-collapse text-sm">
             <thead className="sticky top-0 bg-ink-900/95 backdrop-blur">
               <tr className="border-b border-white/10 text-left">
-                <th scope="col" className="px-5 py-3 font-medium text-bone-muted">County</th>
-                <th scope="col" className="px-3 py-3 font-medium text-bone-muted">Candidate</th>
+                <th scope="col" className="px-5 py-3 font-medium text-bone-muted">
+                  County
+                </th>
+                <th scope="col" className="px-3 py-3 font-medium text-bone-muted">
+                  Candidate
+                </th>
                 {VOTE_CHOICE_ORDER.map((choice) => (
                   <th
                     key={choice}
@@ -161,10 +170,7 @@ export default async function AdminCountiesPage() {
                   </th>
                   <td className="px-3 py-3 font-medium text-bone">{row.candidateName}</td>
                   {VOTE_CHOICE_ORDER.map((choice) => (
-                    <td
-                      key={choice}
-                      className="px-3 py-3 text-right tabular-nums text-bone-muted"
-                    >
+                    <td key={choice} className="px-3 py-3 text-right tabular-nums text-bone-muted">
                       {formatNumber(row.votes[choice])}
                     </td>
                   ))}

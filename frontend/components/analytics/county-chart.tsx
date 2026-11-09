@@ -10,7 +10,7 @@ import { EmptyState } from '@/frontend/components/ui/primitives'
  *
  * A single series measuring magnitude, so it gets one hue — not a categorical
  * palette. Colour here carries no identity (the axis label already does), which
- * is why every bar is the same gold: painting each county differently would
+ * is why every bar is the same flag green: painting each county differently would
  * imply a distinction that does not exist in the data.
  *
  * Capped at the top 12 counties. The cap is stated in the UI rather than
@@ -62,7 +62,7 @@ export function CountyChart({ byCounty }: { byCounty: CountyParticipation[] }) {
                 width={104}
               />
               <Tooltip
-                cursor={{ fill: 'rgb(247 245 240 / 0.04)' }}
+                cursor={{ fill: 'rgb(250 249 246 / 0.04)' }}
                 content={({ active, payload, label }) => {
                   if (!active || !payload?.length) return null
 
@@ -73,19 +73,14 @@ export function CountyChart({ byCounty }: { byCounty: CountyParticipation[] }) {
                         {
                           name: 'Ratings cast',
                           value: Number(payload[0]?.value ?? 0),
-                          color: '#F5B942',
+                          color: '#22B05F',
                         },
                       ]}
                     />
                   )
                 }}
               />
-              <Bar
-                dataKey="votes"
-                fill="#F5B942"
-                radius={[0, 4, 4, 0]}
-                maxBarSize={18}
-              />
+              <Bar dataKey="votes" fill="#22B05F" radius={[0, 4, 4, 0]} maxBarSize={18} />
             </BarChart>
           </ResponsiveContainer>
         </div>

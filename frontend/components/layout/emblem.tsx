@@ -1,8 +1,8 @@
 import { cn } from '@/frontend/lib/utils'
 
 /**
- * The platform mark: a shield built from the three flag accents around a
- * central check.
+ * The platform mark: a shield running from the flag's green into its red,
+ * around a white check — the flag's white fimbriation.
  *
  * Deliberately abstract — it must not resemble the Kenyan Coat of Arms or any
  * IEBC insignia, since the platform is explicitly unaffiliated with both.
@@ -18,9 +18,8 @@ export function Emblem({ className }: { className?: string }) {
     >
       <defs>
         <linearGradient id="emblem-shield" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#1EB854" />
-          <stop offset="55%" stopColor="#F5B942" />
-          <stop offset="100%" stopColor="#E23D3D" />
+          <stop offset="0%" stopColor="#22B05F" />
+          <stop offset="100%" stopColor="#F0464B" />
         </linearGradient>
       </defs>
 
@@ -33,7 +32,7 @@ export function Emblem({ className }: { className?: string }) {
       />
       <path
         d="m13.6 20.2 4.6 4.6 8.2-9"
-        stroke="#F7F5F0"
+        stroke="#FAF9F6"
         strokeWidth="2.6"
         strokeLinecap="round"
         strokeLinejoin="round"

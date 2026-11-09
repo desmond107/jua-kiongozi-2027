@@ -77,7 +77,7 @@ export function CandidateCard({
                   {candidate.fullName}
                 </h3>
                 <ArrowUpRight
-                  className="mt-1 h-4 w-4 shrink-0 text-bone-dim transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-gold"
+                  className="mt-1 h-4 w-4 shrink-0 text-bone-dim transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-flame"
                   aria-hidden
                 />
               </div>

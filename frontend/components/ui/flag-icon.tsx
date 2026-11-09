@@ -56,7 +56,7 @@ export function FlagIcon({
       */}
       <path
         d="M3.2 1.6v12.8"
-        stroke="#F7F5F0"
+        stroke="#FAF9F6"
         strokeOpacity="0.5"
         strokeWidth="1.6"
         strokeLinecap="round"

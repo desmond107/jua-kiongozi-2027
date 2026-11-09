@@ -52,7 +52,7 @@ export function AdminChrome({
       <header className="sticky top-0 z-40 border-b border-white/10 bg-ink-900/85 backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center gap-4 px-5 py-4 sm:px-8">
           <div className="flex items-center gap-3">
-            <span className="rounded-lg border border-gold/30 bg-gold/10 px-2 py-1 font-display text-xs font-semibold uppercase tracking-[0.16em] text-gold">
+            <span className="rounded-lg border border-flame/30 bg-flame/10 px-2 py-1 font-display text-xs font-semibold uppercase tracking-[0.16em] text-flame">
               Console
             </span>
             <span className="text-sm text-bone-muted">
@@ -80,7 +80,8 @@ export function AdminChrome({
             {TABS.map((tab) => {
               // Exact match for the index tab, prefix match for the rest —
               // otherwise "/admin" would highlight on every child route.
-              const active = tab.href === '/admin' ? pathname === tab.href : pathname.startsWith(tab.href)
+              const active =
+                tab.href === '/admin' ? pathname === tab.href : pathname.startsWith(tab.href)
 
               return (
                 <li key={tab.href}>
@@ -90,7 +91,7 @@ export function AdminChrome({
                     className={cn(
                       'flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-sm transition-colors',
                       active
-                        ? 'border-gold text-bone'
+                        ? 'border-flame text-bone'
                         : 'border-transparent text-bone-dim hover:text-bone-muted',
                     )}
                   >

@@ -84,7 +84,7 @@ export function CandidateGrid({
               aria-label="Candidates you have rated"
             >
               <div
-                className="h-full rounded-full bg-gradient-to-r from-verdant to-gold transition-all duration-700"
+                className="h-full rounded-full bg-gradient-to-r from-verdant-deep to-verdant-soft transition-all duration-700"
                 style={{ width: `${total ? (done / total) * 100 : 0}%` }}
               />
             </div>

@@ -48,9 +48,7 @@ export default async function AdminOverviewPage() {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold text-bone">Overview</h1>
-          <p className="mt-1 text-sm text-bone-dim">
-            Live figures across the whole platform.
-          </p>
+          <p className="mt-1 text-sm text-bone-dim">Live figures across the whole platform.</p>
         </div>
         <ExportButtons dataset="summary" note="Excel includes the per-county sheet" />
       </header>
@@ -131,7 +129,7 @@ export default async function AdminOverviewPage() {
             <h2 className="font-display text-lg font-semibold text-bone">Top counties</h2>
             <p className="mt-1 text-sm text-bone-dim">By registrations.</p>
           </div>
-          <Link href="/admin/counties" className="text-sm text-gold hover:underline">
+          <Link href="/admin/counties" className="text-sm text-flame hover:underline">
             All 47 counties →
           </Link>
         </div>
@@ -140,7 +138,9 @@ export default async function AdminOverviewPage() {
           <table className="w-full min-w-[560px] border-collapse text-sm">
             <thead>
               <tr className="border-b border-white/10 text-left">
-                <th scope="col" className="px-5 py-3 font-medium text-bone-muted">County</th>
+                <th scope="col" className="px-5 py-3 font-medium text-bone-muted">
+                  County
+                </th>
                 <th scope="col" className="px-3 py-3 text-right font-medium text-bone-muted">
                   Registered
                 </th>
@@ -150,7 +150,9 @@ export default async function AdminOverviewPage() {
                 <th scope="col" className="px-3 py-3 text-right font-medium text-bone-muted">
                   Flags
                 </th>
-                <th scope="col" className="px-5 py-3 font-medium text-bone-muted">Leading</th>
+                <th scope="col" className="px-5 py-3 font-medium text-bone-muted">
+                  Leading
+                </th>
               </tr>
             </thead>
             <tbody>

@@ -45,13 +45,13 @@ export default function PrivacyPolicyPage() {
               keyed hash, used for one purpose: confirming this ID has not registered before.
             </li>
             <li>
-              <strong className="text-bone">Your county</strong> — self-declared at registration, used
-              only for the aggregate participation-by-region breakdown.
+              <strong className="text-bone">Your county</strong> — self-declared at registration,
+              used only for the aggregate participation-by-region breakdown.
             </li>
             <li>
               <strong className="text-bone">Your voting token</strong> — stored encrypted rather
-              than hashed, so it can be shown to you again after you re-verify your phone. See{' '}
-              “How each secret is protected” below.
+              than hashed, so it can be shown to you again after you re-verify your phone. See “How
+              each secret is protected” below.
             </li>
             <li>
               <strong className="text-bone">Your votes and trust flags</strong> — linked to your
@@ -146,7 +146,7 @@ export default function PrivacyPolicyPage() {
           </div>
         </section>
 
-        <section className="space-y-3 rounded-2xl border border-gold/25 bg-gold/[0.06] p-6">
+        <section className="space-y-3 rounded-2xl border border-flame/25 bg-flame/[0.06] p-6">
           <h2 className="font-display text-base font-semibold text-bone">
             Note for whoever operates this platform
           </h2>

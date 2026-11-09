@@ -116,7 +116,7 @@ export function HeroCarousel({ className }: { className?: string }) {
               onClick={() => go(slideIndex)}
               className={cn(
                 'h-1.5 rounded-full transition-all duration-300',
-                slideIndex === index ? 'w-7 bg-gold' : 'w-1.5 bg-white/30 hover:bg-white/60',
+                slideIndex === index ? 'w-7 bg-flame' : 'w-1.5 bg-white/30 hover:bg-white/60',
               )}
             />
           ))}

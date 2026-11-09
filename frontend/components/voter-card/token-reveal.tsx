@@ -96,7 +96,7 @@ export function TokenReveal({ onRevealed }: { onRevealed: (rawToken: string) => 
     return (
       <div className="glass space-y-4 p-5">
         <div className="flex items-start gap-3">
-          <KeyRound className="mt-0.5 h-5 w-5 shrink-0 text-gold" aria-hidden />
+          <KeyRound className="mt-0.5 h-5 w-5 shrink-0 text-flame" aria-hidden />
           <div className="space-y-1">
             <h2 className="font-display text-base font-semibold text-bone">
               Retrieve your voting token
@@ -158,7 +158,7 @@ export function TokenReveal({ onRevealed }: { onRevealed: (rawToken: string) => 
 
       {/* Development only — the server omits `devCode` in production. */}
       {stage === 'code' && challenge?.devCode ? (
-        <p className="rounded-2xl border border-gold/30 bg-gold/[0.08] p-3.5 text-sm text-gold">
+        <p className="rounded-2xl border border-flame/30 bg-flame/[0.08] p-3.5 text-sm text-flame">
           <strong className="font-semibold">Development mode:</strong> no SMS was sent. Your code is{' '}
           <span className="font-mono tracking-widest">{challenge.devCode}</span>.
         </p>

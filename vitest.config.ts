@@ -22,8 +22,11 @@ export default defineConfig({
     include: ['tests/**/*.test.ts'],
     setupFiles: ['tests/setup.ts'],
     // Integration tests talk to one shared database — no parallelism.
+    // One forked worker, reused across files — what `poolOptions.forks.singleFork`
+    // expressed before Vitest 4 moved pool options to the top level.
     pool: 'forks',
-    poolOptions: { forks: { singleFork: true } },
+    maxWorkers: 1,
+    isolate: false,
     fileParallelism: false,
     testTimeout: 30_000,
     hookTimeout: 30_000,

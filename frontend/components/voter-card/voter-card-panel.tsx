@@ -63,6 +63,11 @@ export function VoterCardPanel({
 
     // Claim it once, then drop it from the store so a client-side navigation
     // back to this page cannot surface it a second time.
+    //
+    // This must happen after mount, not in a useState initialiser: the server
+    // render never sees the store, so reading it during render would make the
+    // client's first pass disagree with the server HTML.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIssued(claimed)
     useRegistrationStore.getState().clear()
   }, [])
@@ -129,7 +134,7 @@ export function VoterCardPanel({
           aria-label="Candidates rated"
         >
           <div
-            className="h-full rounded-full bg-gradient-to-r from-verdant to-gold transition-all duration-700"
+            className="h-full rounded-full bg-gradient-to-r from-verdant-deep to-verdant-soft transition-all duration-700"
             style={{
               width: `${totalCandidates ? (status.candidatesRated / totalCandidates) * 100 : 0}%`,
             }}

@@ -1,12 +1,24 @@
 import type { Config } from 'tailwindcss'
 
 /**
- * "Vibrant elegance with depth".
+ * The Kenyan flag, as a palette.
  *
- * The palette is a deep near-black navy base carrying three vibrant accents
- * drawn from the Kenyan flag. Accents are used as *light* — glows, gradient
- * meshes, card edges — rather than as flat filled blocks, which is what keeps
- * the result feeling premium rather than gaudy.
+ *   ink     — the black band: the ground everything sits on
+ *   bone    — the white fimbriations: type, hairlines, focus rings
+ *   flame   — the red band: the signature accent (CTAs, links, eyebrows)
+ *   verdant — the green band: verification, success, progress
+ *
+ * The flag's own reds and greens are deep (#BB0000, #006B3F): right for a
+ * filled button carrying white text, too dark to read AS text on black. So each
+ * hue has a `deep` step that is the flag colour itself and lighter steps tuned
+ * to clear WCAG AA against the ink surfaces. Accents are still used mostly as
+ * *light* — glows, washes, card edges — which is what keeps a black, red and
+ * green page feeling elegant rather than loud.
+ *
+ * Contrast, against ink-800:
+ *   bone 18.1  ·  bone-muted 12.8  ·  bone-dim 6.5
+ *   flame 5.2  ·  flame-soft 7.5   ·  verdant 6.7  ·  verdant-soft 9.8
+ *   bone on flame-deep 6.8  ·  bone on verdant-deep 6.6
  */
 const config: Config = {
   content: ['./app/**/*.{ts,tsx}', './frontend/**/*.{ts,tsx}'],
@@ -14,34 +26,32 @@ const config: Config = {
     extend: {
       colors: {
         // Layered background depths, darkest to lightest.
+        // Layered blacks, darkest to lightest. Neutral with the faintest warmth,
+        // so they read as the flag's black rather than as a cold grey.
         ink: {
-          950: '#05070D',
-          900: '#070A12',
-          800: '#0A0E1A',
-          700: '#111726',
-          600: '#1A2233',
-          500: '#252F45',
-          400: '#36425C',
+          950: '#060606',
+          900: '#0B0B0C',
+          800: '#101011',
+          700: '#18181A',
+          600: '#222225',
+          500: '#2E2E32',
+          400: '#44444A',
         },
         bone: {
-          DEFAULT: '#F7F5F0',
-          muted: '#C9CEDA',
-          dim: '#8A93A6',
+          DEFAULT: '#FAF9F6',
+          muted: '#D6D4CE',
+          dim: '#9A968F',
         },
         verdant: {
-          DEFAULT: '#1EB854',
-          soft: '#4ADE80',
-          deep: '#0E7A38',
+          DEFAULT: '#22B05F',
+          soft: '#4ED18A',
+          deep: '#006B3F',
         },
         flame: {
-          DEFAULT: '#E23D3D',
-          soft: '#F87171',
-          deep: '#991B1B',
-        },
-        gold: {
-          DEFAULT: '#F5B942',
-          soft: '#FCD34D',
-          deep: '#B47A0C',
+          DEFAULT: '#F0464B',
+          soft: '#FF7A7A',
+          deep: '#BB0000',
+          ember: '#7E0A0E',
         },
         // Trust-flag ordinal ramp and the vote-choice palette. Both mirror
         // FLAG_META / VOTE_CHOICE_COLORS in backend/validators/vote.validator.ts
@@ -74,26 +84,33 @@ const config: Config = {
           'clamp(2.5rem, 8vw, 4rem)',
           { lineHeight: '1.05', letterSpacing: '-0.03em' },
         ],
-        'display-lg': [
-          'clamp(3rem, 9vw, 5.5rem)',
-          { lineHeight: '1', letterSpacing: '-0.035em' },
-        ],
+        'display-lg': ['clamp(3rem, 9vw, 5.5rem)', { lineHeight: '1', letterSpacing: '-0.035em' }],
       },
       borderRadius: {
         '4xl': '2rem',
       },
+      // Tailwind's opacity scale steps in fives, so `border-white/12` silently
+      // matched nothing and inputs fell back to the default light-grey border —
+      // a bright white outline on a black page.
+      opacity: {
+        12: '0.12',
+      },
       backgroundImage: {
         'mesh-primary':
-          'radial-gradient(60% 60% at 20% 15%, rgb(30 184 84 / 0.18) 0%, transparent 60%), radial-gradient(50% 50% at 85% 20%, rgb(245 185 66 / 0.14) 0%, transparent 60%), radial-gradient(70% 70% at 60% 90%, rgb(226 61 61 / 0.12) 0%, transparent 65%)',
+          'radial-gradient(55% 55% at 12% 8%, rgb(0 107 63 / 0.30) 0%, transparent 60%), radial-gradient(50% 50% at 92% 18%, rgb(187 0 0 / 0.20) 0%, transparent 62%), radial-gradient(70% 60% at 55% 105%, rgb(187 0 0 / 0.10) 0%, transparent 65%)',
         sheen:
-          'linear-gradient(115deg, transparent 20%, rgb(247 245 240 / 0.14) 45%, rgb(247 245 240 / 0.05) 55%, transparent 75%)',
+          'linear-gradient(115deg, transparent 20%, rgb(250 249 246 / 0.14) 45%, rgb(250 249 246 / 0.05) 55%, transparent 75%)',
+        // The flag read top to bottom — black, white, red, white, green — laid
+        // out left to right. The thin white bands are the fimbriations. The
+        // black band is lifted to charcoal: true black vanishes into the page
+        // and makes the stripe look as though it starts a third of the way in.
         'flag-stripe':
-          'linear-gradient(90deg, #1EB854 0%, #1EB854 33%, #E23D3D 33%, #E23D3D 66%, #F5B942 66%, #F5B942 100%)',
+          'linear-gradient(90deg, #2E2E32 0%, #2E2E32 30%, #FAF9F6 30%, #FAF9F6 33%, #BB0000 33%, #BB0000 64%, #FAF9F6 64%, #FAF9F6 67%, #006B3F 67%, #006B3F 100%)',
       },
       boxShadow: {
-        glow: '0 0 0 1px rgb(247 245 240 / 0.06), 0 20px 60px -20px rgb(0 0 0 / 0.8)',
-        'glow-verdant': '0 0 40px -8px rgb(30 184 84 / 0.45)',
-        'glow-gold': '0 0 40px -8px rgb(245 185 66 / 0.4)',
+        glow: '0 0 0 1px rgb(250 249 246 / 0.06), 0 20px 60px -20px rgb(0 0 0 / 0.8)',
+        'glow-verdant': '0 0 40px -8px rgb(34 176 95 / 0.45)',
+        'glow-flame': '0 0 40px -8px rgb(187 0 0 / 0.55)',
         lift: '0 30px 80px -30px rgb(0 0 0 / 0.9)',
       },
       keyframes: {

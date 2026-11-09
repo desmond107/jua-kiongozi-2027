@@ -86,7 +86,7 @@ export function FieldHint({ children }: { children: React.ReactNode }) {
 }
 
 const controlClasses =
-  'w-full rounded-2xl border border-white/12 bg-ink-900/60 px-4 py-3 text-bone placeholder:text-bone-dim/60 transition-colors focus:border-gold/50 disabled:opacity-50'
+  'w-full rounded-2xl border border-white/12 bg-ink-900/60 px-4 py-3 text-bone placeholder:text-bone-dim/60 transition-colors focus:border-bone/40 disabled:opacity-50'
 
 export const Input = React.forwardRef<
   HTMLInputElement,
@@ -119,7 +119,12 @@ export const Select = React.forwardRef<
       id={id}
       aria-invalid={invalid || undefined}
       aria-describedby={cn(invalid && errorId, hintId) || undefined}
-      className={cn(controlClasses, 'appearance-none pr-10', invalid && 'border-flame/60', className)}
+      className={cn(
+        controlClasses,
+        'appearance-none pr-10',
+        invalid && 'border-flame/60',
+        className,
+      )}
       {...props}
     >
       {children}
@@ -147,7 +152,7 @@ export function Checkbox({
           aria-invalid={Boolean(error) || undefined}
           aria-describedby={error ? errorId : undefined}
           className={cn(
-            'mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded-md border border-white/20 bg-ink-900/60 accent-gold',
+            'mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded-md border border-white/20 bg-ink-900/60 accent-verdant',
             error && 'border-flame/60',
           )}
           {...props}

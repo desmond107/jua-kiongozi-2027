@@ -33,8 +33,9 @@ const COLUMNS = [
 export function Footer() {
   return (
     <footer className="relative mt-24 border-t border-white/10 bg-ink-900/60">
-      {/* Flag stripe: the one place the three accents appear as flat colour. */}
-      <div className="h-1 w-full bg-flag-stripe opacity-70" aria-hidden />
+      {/* Flag stripe: with the navbar's, the only places the flag's colours
+          appear as flat bands rather than as light. */}
+      <div className="h-1 w-full bg-flag-stripe" aria-hidden />
 
       <div className="mx-auto w-full max-w-6xl px-5 py-14 sm:px-8">
         <div className="grid gap-10 md:grid-cols-[1.5fr_repeat(3,1fr)]">
@@ -42,7 +43,7 @@ export function Footer() {
             <Link href="/" className="flex items-center gap-3">
               <Emblem className="h-9 w-9" />
               <span className="font-display text-lg font-semibold text-bone">
-                Jua Kiongozi <span className="text-gold">’27</span>
+                Jua Kiongozi <span className="text-flame">’27</span>
               </span>
             </Link>
             <p className="max-w-xs text-sm leading-relaxed text-bone-dim">
@@ -76,7 +77,7 @@ export function Footer() {
 
         {/* The three required notices, persistent on every page of the site. */}
         <div className="space-y-4 text-xs leading-relaxed text-bone-dim">
-          <p className="rounded-2xl border border-gold/20 bg-gold/[0.05] p-4 text-bone-muted">
+          <p className="rounded-2xl border border-flame/20 bg-flame/[0.05] p-4 text-bone-muted">
             <strong className="font-semibold text-bone">Important:</strong> {IEBC_DISCLAIMER}
           </p>
           <p>{DATA_DISCLAIMER}</p>

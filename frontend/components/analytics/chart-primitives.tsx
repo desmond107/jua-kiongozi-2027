@@ -16,12 +16,12 @@ import { cn } from '@/frontend/lib/utils'
  */
 
 /** The surface every chart is drawn on. Charts are validated against this colour. */
-export const CHART_SURFACE = '#131A29'
+export const CHART_SURFACE = '#18181A'
 
 /** Recessive grid and axis tokens — present, never competing with the data. */
 export const AXIS = {
-  stroke: 'rgb(247 245 240 / 0.10)',
-  tick: { fill: '#8A93A6', fontSize: 12 },
+  stroke: 'rgb(250 249 246 / 0.10)',
+  tick: { fill: '#9A968F', fontSize: 12 },
 }
 
 export function ChartPanel({

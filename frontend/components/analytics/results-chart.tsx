@@ -84,7 +84,7 @@ export function ResultsChart({ candidates }: { candidates: CandidateAnalytics[] 
                   width={128}
                 />
                 <Tooltip
-                  cursor={{ fill: 'rgb(247 245 240 / 0.04)' }}
+                  cursor={{ fill: 'rgb(250 249 246 / 0.04)' }}
                   content={({ active, payload, label }) => {
                     if (!active || !payload?.length) return null
                     const total = Number(payload[0]?.payload?.total ?? 0)
@@ -115,7 +115,7 @@ export function ResultsChart({ candidates }: { candidates: CandidateAnalytics[] 
                     stackId="votes"
                     fill={VOTE_CHOICE_COLORS[choice]}
                     // 2px surface-coloured separator between stacked segments.
-                    stroke="#131A29"
+                    stroke="#18181A"
                     strokeWidth={2}
                     // Only the final segment gets rounded ends, so the stack
                     // reads as one bar rather than three pills.

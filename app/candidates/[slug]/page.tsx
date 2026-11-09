@@ -104,7 +104,7 @@ export default async function CandidateProfilePage({
         <div className="space-y-5">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge tone="gold">{candidate.role}</Badge>
+              <Badge tone="flame">{candidate.role}</Badge>
               <Badge>{candidate.party ?? 'Party not publicly declared'}</Badge>
             </div>
             <h1 className="text-display-md font-semibold text-balance text-bone">
@@ -172,7 +172,7 @@ export default async function CandidateProfilePage({
                             width: `${share}%`,
                             backgroundColor: VOTE_CHOICE_COLORS[choice],
                             // 2px surface gap so adjacent fills stay distinct.
-                            boxShadow: 'inset -2px 0 0 0 #131A29',
+                            boxShadow: 'inset -2px 0 0 0 #18181A',
                           }}
                         />
                       )

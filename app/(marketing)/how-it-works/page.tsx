@@ -1,6 +1,11 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { FLAG_COLOR_ORDER, FLAG_META, VOTE_CHOICE_META, VOTE_CHOICE_ORDER } from '@/backend/validators'
+import {
+  FLAG_COLOR_ORDER,
+  FLAG_META,
+  VOTE_CHOICE_META,
+  VOTE_CHOICE_ORDER,
+} from '@/backend/validators'
 import { Button } from '@/frontend/components/ui/button'
 import { PageContainer, SectionHeading } from '@/frontend/components/ui/primitives'
 import { FlagIcon } from '@/frontend/components/ui/flag-icon'
@@ -57,7 +62,7 @@ export default function HowItWorksPage() {
         <ol className="space-y-4">
           {STEPS.map((item) => (
             <li key={item.step} className="glass flex gap-5 p-6">
-              <span className="font-display text-2xl font-semibold text-gold/50">{item.step}</span>
+              <span className="font-display text-2xl font-semibold text-flame/50">{item.step}</span>
               <div className="space-y-2">
                 <h2 className="font-display text-lg font-semibold text-bone">{item.title}</h2>
                 <p className="text-sm leading-relaxed text-bone-muted">{item.body}</p>
@@ -71,7 +76,7 @@ export default function HowItWorksPage() {
           <h2 className="font-display text-xl font-semibold text-bone">What you are asked</h2>
 
           <div className="glass space-y-4 p-6">
-            <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-gold">
+            <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-flame">
               The sentiment vote
             </h3>
             <p className="text-sm text-bone-muted">
@@ -90,7 +95,7 @@ export default function HowItWorksPage() {
           </div>
 
           <div className="glass space-y-4 p-6">
-            <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-gold">
+            <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-flame">
               The trust flag
             </h3>
             <p className="text-sm text-bone-muted">

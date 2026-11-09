@@ -33,13 +33,12 @@ export function LiveCounter({
   const reducedMotion = useReducedMotion()
   const [display, setDisplay] = useState(0)
 
-  useEffect(() => {
-    if (!inView) return
+  // With nothing to animate, the settled value is shown as-is.
+  const animated = !reducedMotion && value !== 0
+  const shown = inView && !animated ? value : display
 
-    if (reducedMotion || value === 0) {
-      setDisplay(value)
-      return
-    }
+  useEffect(() => {
+    if (!inView || !animated) return
 
     const controls = animate(0, value, {
       duration: 1.1,
@@ -48,14 +47,14 @@ export function LiveCounter({
     })
 
     return () => controls.stop()
-  }, [inView, value, reducedMotion])
+  }, [inView, value, animated])
 
   return (
     <div ref={ref} className={cn('glass flex flex-col p-5', className)}>
       <p className="text-xs uppercase tracking-[0.16em] text-bone-dim">{label}</p>
       <p className="mt-2 font-display text-3xl font-semibold text-bone sm:text-4xl">
         {/* The live region announces the settled value, not every tick. */}
-        <span aria-hidden>{formatNumber(display)}</span>
+        <span aria-hidden>{formatNumber(shown)}</span>
         <span className="sr-only">{formatNumber(value)}</span>
         {suffix ? <span className="ml-1 text-xl text-bone-dim">{suffix}</span> : null}
       </p>

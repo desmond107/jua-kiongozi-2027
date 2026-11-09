@@ -18,8 +18,8 @@ export default async function AdminLoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-ink-900 px-5 py-16">
       <div className="w-full max-w-sm space-y-8">
         <header className="space-y-3 text-center">
-          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-gold/30 bg-gold/10">
-            <ShieldCheck className="h-6 w-6 text-gold" aria-hidden />
+          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-flame/30 bg-flame/10">
+            <ShieldCheck className="h-6 w-6 text-flame" aria-hidden />
           </span>
           <h1 className="font-display text-2xl font-semibold text-bone">Operator sign-in</h1>
           <p className="text-sm leading-relaxed text-bone-dim">

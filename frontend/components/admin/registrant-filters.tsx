@@ -13,13 +13,7 @@ import { Button } from '@/frontend/components/ui/button'
  * be bookmarked, reloaded and shared between operators — and so the export
  * links can be built from exactly the same values the table was rendered from.
  */
-export function RegistrantFilters({
-  county,
-  search,
-}: {
-  county?: string
-  search?: string
-}) {
+export function RegistrantFilters({ county, search }: { county?: string; search?: string }) {
   const router = useRouter()
   const params = useSearchParams()
   const [term, setTerm] = useState(search ?? '')
@@ -60,7 +54,7 @@ export function RegistrantFilters({
             onChange={(event) => setTerm(event.target.value)}
             placeholder="Search by name"
             aria-label="Search registrants by name"
-            className="w-56 rounded-xl border border-white/12 bg-ink-900/60 py-2 pl-9 pr-3 text-sm text-bone placeholder:text-bone-dim/60 focus:border-gold/50"
+            className="w-56 rounded-xl border border-white/12 bg-ink-900/60 py-2 pl-9 pr-3 text-sm text-bone placeholder:text-bone-dim/60 focus:border-bone/40"
           />
         </div>
         <Button type="submit" variant="glass" size="sm">

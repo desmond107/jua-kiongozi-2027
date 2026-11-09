@@ -8,7 +8,14 @@ import { AlertCircle, ArrowLeft, ArrowRight, MessageSquare, ShieldCheck } from '
 import type { OtpChallenge } from '@/backend/services/otp.service'
 import { KENYAN_COUNTIES, registerSchema, type KenyanCounty } from '@/backend/validators'
 import { Button } from '@/frontend/components/ui/button'
-import { Checkbox, Field, FieldHint, FieldLabel, Input, Select } from '@/frontend/components/ui/field'
+import {
+  Checkbox,
+  Field,
+  FieldHint,
+  FieldLabel,
+  Input,
+  Select,
+} from '@/frontend/components/ui/field'
 import { DisclaimerBanner, TrustNotices } from '@/frontend/components/layout/disclaimers'
 import { api, RequestError } from '@/frontend/lib/api'
 import { useRegistrationStore } from '@/frontend/stores/registration.store'
@@ -60,10 +67,11 @@ export function RegisterForm() {
   const [acknowledgedNotIebc, setAcknowledgedNotIebc] = useState(false)
 
   /** Spreads a ZodError (or a server field map) into per-field messages. */
-  function applyIssues(issues: { path: (string | number)[]; message: string }[]): Errors {
+  function applyIssues(issues: { path: PropertyKey[]; message: string }[]): Errors {
     const next: Errors = {}
     for (const issue of issues) {
-      const key = issue.path.join('.')
+      // zod 4 types path segments as PropertyKey; String() keeps a symbol from throwing.
+      const key = issue.path.map(String).join('.')
       if (!next[key]) next[key] = issue.message
     }
     setErrors(next)
@@ -176,13 +184,13 @@ export function RegisterForm() {
           <div key={value} className="flex flex-1 items-center gap-3">
             <span
               className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
-                step >= value ? 'bg-gold text-ink-900' : 'bg-white/10 text-bone-dim'
+                step >= value ? 'bg-verdant-deep text-bone' : 'bg-white/10 text-bone-dim'
               }`}
             >
               {value}
             </span>
             <span
-              className={`h-px flex-1 transition-colors ${step > value ? 'bg-gold/60' : 'bg-white/10'}`}
+              className={`h-px flex-1 transition-colors ${step > value ? 'bg-verdant/60' : 'bg-white/10'}`}
             />
           </div>
         ))}
@@ -317,7 +325,7 @@ export function RegisterForm() {
             {/* Development convenience only: the server omits `devCode` in
                 production, so this block cannot render on a real deployment. */}
             {challenge?.devCode ? (
-              <p className="rounded-2xl border border-gold/30 bg-gold/[0.08] p-3.5 text-sm text-gold">
+              <p className="rounded-2xl border border-flame/30 bg-flame/[0.08] p-3.5 text-sm text-flame">
                 <strong className="font-semibold">Development mode:</strong> no SMS was sent. Your
                 code is <span className="font-mono tracking-widest">{challenge.devCode}</span>.
               </p>
@@ -427,13 +435,13 @@ export function RegisterForm() {
                 label={
                   <>
                     I accept the{' '}
-                    <Link href="/terms" className="text-gold underline-offset-4 hover:underline">
+                    <Link href="/terms" className="text-flame underline-offset-4 hover:underline">
                       terms of use
                     </Link>{' '}
                     and the{' '}
                     <Link
                       href="/privacy-policy"
-                      className="text-gold underline-offset-4 hover:underline"
+                      className="text-flame underline-offset-4 hover:underline"
                     >
                       privacy policy
                     </Link>
@@ -481,7 +489,7 @@ export function RegisterForm() {
 
       <p className="text-center text-sm text-bone-dim">
         Already registered?{' '}
-        <Link href="/login" className="text-gold underline-offset-4 hover:underline">
+        <Link href="/login" className="text-flame underline-offset-4 hover:underline">
           Sign in with your token
         </Link>
       </p>

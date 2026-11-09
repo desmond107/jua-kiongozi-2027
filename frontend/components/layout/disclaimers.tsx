@@ -24,11 +24,11 @@ export function DisclaimerBanner({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'flex items-start gap-3 rounded-2xl border border-gold/25 bg-gold/[0.07] p-4',
+        'flex items-start gap-3 rounded-2xl border border-flame/25 bg-flame/[0.07] p-4',
         className,
       )}
     >
-      <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-gold" aria-hidden />
+      <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-flame" aria-hidden />
       <p className="text-sm leading-relaxed text-bone-muted">
         <strong className="font-semibold text-bone">This is not an official IEBC platform.</strong>{' '}
         {IEBC_DISCLAIMER.split('. ').slice(1).join('. ')}
@@ -49,7 +49,7 @@ export function TrustNotices({ className }: { className?: string }) {
     <ul className={cn('space-y-4', className)}>
       {notices.map(({ icon: Icon, title, body }) => (
         <li key={title} className="flex items-start gap-3">
-          <Icon className="mt-0.5 h-4 w-4 shrink-0 text-gold" aria-hidden />
+          <Icon className="mt-0.5 h-4 w-4 shrink-0 text-flame" aria-hidden />
           <div className="space-y-1">
             <p className="text-sm font-semibold text-bone">{title}</p>
             <p className="text-sm leading-relaxed text-bone-dim">{body}</p>

@@ -118,7 +118,9 @@ export default async function TransparencyPage() {
       <section className="mt-16 space-y-6">
         <div className="flex items-center gap-2.5">
           <ShieldCheck className="h-5 w-5 text-verdant" aria-hidden />
-          <h2 className="font-display text-xl font-semibold text-bone">Methodology and integrity</h2>
+          <h2 className="font-display text-xl font-semibold text-bone">
+            Methodology and integrity
+          </h2>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -130,7 +132,7 @@ export default async function TransparencyPage() {
           ))}
         </div>
 
-        <div className="glass space-y-3 border-gold/25 p-6">
+        <div className="glass space-y-3 border-flame/25 p-6">
           <h3 className="font-display text-base font-semibold text-bone">
             How these numbers should be read
           </h3>

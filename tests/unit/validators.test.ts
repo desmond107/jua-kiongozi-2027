@@ -34,7 +34,8 @@ describe('registerSchema', () => {
   it('requires a county', () => {
     // County is mandatory so the participation-by-region breakdown covers
     // everyone rather than a self-selected subset.
-    const { county, ...withoutCounty } = validRegistration
+    const withoutCounty: Partial<typeof validRegistration> = { ...validRegistration }
+    delete withoutCounty.county
     const result = registerSchema.safeParse(withoutCounty)
 
     expect(result.success).toBe(false)
@@ -90,9 +91,9 @@ describe('registerSchema', () => {
   })
 
   it('requires both consent gates to be explicitly true', () => {
-    expect(
-      registerSchema.safeParse({ ...validRegistration, acceptedTerms: false }).success,
-    ).toBe(false)
+    expect(registerSchema.safeParse({ ...validRegistration, acceptedTerms: false }).success).toBe(
+      false,
+    )
     expect(
       registerSchema.safeParse({ ...validRegistration, acknowledgedNotIebc: false }).success,
     ).toBe(false)

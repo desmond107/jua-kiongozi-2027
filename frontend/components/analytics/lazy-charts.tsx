@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, type ComponentProps } from 'react'
+import { useSyncExternalStore, type ComponentProps } from 'react'
 import dynamic from 'next/dynamic'
 import { Skeleton } from '@/frontend/components/ui/primitives'
 import type { CountyChart as CountyChartType } from './county-chart'
@@ -61,9 +61,18 @@ function ChartSkeleton({ height = 420 }: { height?: number }) {
  * to agree — which is the entire point.
  */
 function useMounted(): boolean {
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
-  return mounted
+  // The server snapshot answers SSR and hydration; the client snapshot takes
+  // over straight after, with no effect and no extra state update.
+  return useSyncExternalStore(
+    subscribeNever,
+    () => true,
+    () => false,
+  )
+}
+
+/** Mounted-ness never changes once true, so there is nothing to subscribe to. */
+function subscribeNever(): () => void {
+  return () => {}
 }
 
 // No `ssr: false` on any of these: the mount gate below already guarantees they
@@ -81,9 +90,7 @@ export function ResultsChart(props: ComponentProps<typeof ResultsChartType>) {
   return useMounted() ? <ResultsChartImpl {...props} /> : <ChartSkeleton />
 }
 
-export function FlagDistributionChart(
-  props: ComponentProps<typeof FlagDistributionChartType>,
-) {
+export function FlagDistributionChart(props: ComponentProps<typeof FlagDistributionChartType>) {
   return useMounted() ? <FlagDistributionChartImpl {...props} /> : <ChartSkeleton />
 }
 

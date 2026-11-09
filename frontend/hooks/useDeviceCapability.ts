@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 import { useReducedMotion } from './useReducedMotion'
 
 export type DeviceCapability = {
@@ -34,34 +34,48 @@ export type DeviceCapability = {
  */
 export function useDeviceCapability(): DeviceCapability {
   const reducedMotion = useReducedMotion()
-  const [videoCapable, setVideoCapable] = useState(false)
-  const [probing, setProbing] = useState(true)
-
-  useEffect(() => {
-    const navigatorWithHints = navigator as Navigator & {
-      connection?: { effectiveType?: string; saveData?: boolean }
-    }
-
-    const connection = navigatorWithHints.connection
-
-    // Save-Data is an explicit request; the effectiveType values below are the
-    // coarsest signal a browser gives that a few megabytes will hurt.
-    const slowNetwork =
-      connection?.saveData === true ||
-      ['slow-2g', '2g', '3g'].includes(connection?.effectiveType ?? '')
-
-    // Guards the exotic case of a browser that cannot decode H.264.
-    const canDecodeMp4 = document
-      .createElement('video')
-      .canPlayType('video/mp4; codecs="avc1.42E01E"')
-
-    setVideoCapable(Boolean(canDecodeMp4) && !slowNetwork)
-    setProbing(false)
-  }, [])
+  // 'probing' is the server snapshot, so SSR and hydration agree; the client
+  // snapshot replaces it immediately after, without an effect.
+  const video = useSyncExternalStore(subscribeNever, probeVideo, () => 'probing' as const)
 
   return {
-    canPlayVideo: videoCapable,
+    canPlayVideo: video === 'capable',
     canAnimate: !reducedMotion,
-    probing,
+    probing: video === 'probing',
   }
+}
+
+type VideoProbe = 'probing' | 'capable' | 'incapable'
+
+/** Neither signal is watched for changes, so there is nothing to subscribe to. */
+function subscribeNever(): () => void {
+  return () => {}
+}
+
+// Measured once per page load: React calls the snapshot on every render, and
+// creating a <video> element each time would be wasted work.
+let videoProbe: VideoProbe | undefined
+
+function probeVideo(): VideoProbe {
+  if (videoProbe) return videoProbe
+
+  const navigatorWithHints = navigator as Navigator & {
+    connection?: { effectiveType?: string; saveData?: boolean }
+  }
+
+  const connection = navigatorWithHints.connection
+
+  // Save-Data is an explicit request; the effectiveType values below are the
+  // coarsest signal a browser gives that a few megabytes will hurt.
+  const slowNetwork =
+    connection?.saveData === true ||
+    ['slow-2g', '2g', '3g'].includes(connection?.effectiveType ?? '')
+
+  // Guards the exotic case of a browser that cannot decode H.264.
+  const canDecodeMp4 = document
+    .createElement('video')
+    .canPlayType('video/mp4; codecs="avc1.42E01E"')
+
+  videoProbe = Boolean(canDecodeMp4) && !slowNetwork ? 'capable' : 'incapable'
+  return videoProbe
 }

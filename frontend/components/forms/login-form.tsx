@@ -47,10 +47,11 @@ export function LoginForm() {
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  function applyIssues(issues: { path: (string | number)[]; message: string }[]) {
+  function applyIssues(issues: { path: PropertyKey[]; message: string }[]) {
     const next: Record<string, string> = {}
     for (const issue of issues) {
-      const key = issue.path.join('.')
+      // zod 4 types path segments as PropertyKey; String() keeps a symbol from throwing.
+      const key = issue.path.map(String).join('.')
       if (!next[key]) next[key] = issue.message
     }
     setErrors(next)
@@ -83,9 +84,7 @@ export function LoginForm() {
       setChallenge(await api.requestOtp({ phoneNumber }))
       setOtpCode('')
     } catch (caught) {
-      setFormError(
-        caught instanceof RequestError ? caught.message : 'Could not send your code.',
-      )
+      setFormError(caught instanceof RequestError ? caught.message : 'Could not send your code.')
     } finally {
       setSendingCode(false)
     }
@@ -235,7 +234,7 @@ export function LoginForm() {
                 {challenge.devCode ? (
                   <>
                     {' '}
-                    <span className="text-gold">Development code: {challenge.devCode}</span>
+                    <span className="text-flame">Development code: {challenge.devCode}</span>
                   </>
                 ) : null}
               </FieldHint>
@@ -243,7 +242,7 @@ export function LoginForm() {
                 type="button"
                 onClick={requestCode}
                 disabled={sendingCode}
-                className="rounded text-xs text-gold underline-offset-4 hover:underline disabled:opacity-50"
+                className="rounded text-xs text-flame underline-offset-4 hover:underline disabled:opacity-50"
               >
                 Send a new code
               </button>
@@ -294,7 +293,7 @@ export function LoginForm() {
 
       <p className="text-center text-sm text-bone-dim">
         Not registered yet?{' '}
-        <Link href="/register" className="text-gold underline-offset-4 hover:underline">
+        <Link href="/register" className="text-flame underline-offset-4 hover:underline">
           Get your voting token
         </Link>
       </p>

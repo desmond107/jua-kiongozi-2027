@@ -44,12 +44,12 @@ export function ParallaxSection({
           aria-hidden
         >
           <div className="absolute left-[8%] top-[15%] h-72 w-72 rounded-full bg-verdant/[0.09] blur-[100px]" />
-          <div className="absolute right-[10%] top-[45%] h-80 w-80 rounded-full bg-gold/[0.07] blur-[110px]" />
+          <div className="absolute right-[10%] top-[45%] h-80 w-80 rounded-full bg-flame/[0.07] blur-[110px]" />
         </motion.div>
       ) : (
         <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
           <div className="absolute left-[8%] top-[15%] h-72 w-72 rounded-full bg-verdant/[0.09] blur-[100px]" />
-          <div className="absolute right-[10%] top-[45%] h-80 w-80 rounded-full bg-gold/[0.07] blur-[110px]" />
+          <div className="absolute right-[10%] top-[45%] h-80 w-80 rounded-full bg-flame/[0.07] blur-[110px]" />
         </div>
       )}
 

@@ -33,11 +33,11 @@
     @apply bg-verdant/30 text-bone;
   }
 
-  /* One consistent focus ring everywhere. Deliberately high-contrast: the
-     palette is dark and gradient-heavy, and a subtle ring would vanish against
-     the glow. */
+  /* One consistent focus ring everywhere: white, like the flag's fimbriation.
+     Deliberately high-contrast — on black it is the most visible ring there is,
+     and unlike red it can never be mistaken for an error state. */
   :where(a, button, input, select, textarea, [tabindex]):focus-visible {
-    @apply outline-none ring-2 ring-gold ring-offset-2 ring-offset-ink-900;
+    @apply outline-none ring-2 ring-bone ring-offset-2 ring-offset-ink-900;
   }
 
   h1,
@@ -58,7 +58,7 @@
   }
 
   .gradient-text {
-    @apply bg-gradient-to-br from-bone via-gold-soft to-verdant-soft bg-clip-text text-transparent;
+    @apply bg-gradient-to-br from-bone via-flame-soft to-verdant-soft bg-clip-text text-transparent;
   }
 
   /* Gradient shimmer skeleton — the loading state for every data-fetching
@@ -95,14 +95,14 @@
    * ratio is ever required, put a scrim back — see README.
    */
   .text-over-video {
-    filter: drop-shadow(0 1px 1px rgb(7 10 18 / 0.98)) drop-shadow(0 0 3px rgb(7 10 18 / 0.95))
-      drop-shadow(0 0 8px rgb(7 10 18 / 0.9)) drop-shadow(0 0 20px rgb(7 10 18 / 0.8));
+    filter: drop-shadow(0 1px 1px rgb(6 6 6 / 0.98)) drop-shadow(0 0 3px rgb(6 6 6 / 0.95))
+      drop-shadow(0 0 8px rgb(6 6 6 / 0.9)) drop-shadow(0 0 20px rgb(6 6 6 / 0.8));
   }
 
   /* Heavier halo for display type, which has more interior area to protect. */
   .text-over-video-lg {
-    filter: drop-shadow(0 2px 2px rgb(7 10 18 / 0.95)) drop-shadow(0 0 10px rgb(7 10 18 / 0.9))
-      drop-shadow(0 0 30px rgb(7 10 18 / 0.8)) drop-shadow(0 0 60px rgb(7 10 18 / 0.6));
+    filter: drop-shadow(0 2px 2px rgb(6 6 6 / 0.95)) drop-shadow(0 0 10px rgb(6 6 6 / 0.9))
+      drop-shadow(0 0 30px rgb(6 6 6 / 0.8)) drop-shadow(0 0 60px rgb(6 6 6 / 0.6));
   }
 
   .hairline {

@@ -66,7 +66,7 @@ export default async function LandingPage() {
                 <span className="absolute right-5 top-5 font-display text-4xl font-semibold text-white/[0.06]">
                   {index + 1}
                 </span>
-                <step.icon className="h-6 w-6 text-gold" aria-hidden />
+                <step.icon className="h-6 w-6 text-flame" aria-hidden />
                 <h3 className="font-display text-lg font-semibold text-bone">{step.title}</h3>
                 <p className="text-sm leading-relaxed text-bone-dim">{step.body}</p>
               </div>

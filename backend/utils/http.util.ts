@@ -1,6 +1,6 @@
 import 'server-only'
 import { NextResponse } from 'next/server'
-import { ZodError, type ZodSchema } from 'zod'
+import { ZodError, type ZodType, type output } from 'zod'
 
 /**
  * Thin, typed helpers shared by every route handler in `/app/api`.
@@ -106,7 +106,7 @@ export function zodFields(error: ZodError): Record<string, string> {
   const fields: Record<string, string> = {}
 
   for (const issue of error.issues) {
-    const key = issue.path.join('.') || '_form'
+    const key = issue.path.map(String).join('.') || '_form'
     if (!fields[key]) fields[key] = issue.message
   }
 
@@ -117,10 +117,10 @@ export function zodFields(error: ZodError): Record<string, string> {
  * Parses a JSON request body against a schema, throwing a field-annotated
  * ApiError on failure.
  */
-export async function parseBody<S extends ZodSchema>(
+export async function parseBody<S extends ZodType>(
   request: Request,
   schema: S,
-): Promise<ReturnType<S['parse']>> {
+): Promise<output<S>> {
   let raw: unknown
 
   try {

@@ -39,7 +39,7 @@ export function AdminEntry() {
         // dot stuck on.
         checked={false}
         onChange={() => router.push('/admin/login')}
-        className="h-2.5 w-2.5 cursor-pointer appearance-none rounded-full border border-white/20 bg-white/[0.06] transition-all duration-200 hover:border-gold/60 hover:bg-gold/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold/70"
+        className="h-2.5 w-2.5 cursor-pointer appearance-none rounded-full border border-white/20 bg-white/[0.06] transition-all duration-200 hover:border-flame/60 hover:bg-flame/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-flame/70"
       />
       <span className="pointer-events-none absolute left-5 whitespace-nowrap text-[10px] uppercase tracking-[0.14em] text-bone-dim opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
         Admin

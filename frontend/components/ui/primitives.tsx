@@ -6,11 +6,7 @@ import { cn } from '@/frontend/lib/utils'
  * hooks, no client directives — so they can render inside Server Components.
  */
 
-export function Card({
-  className,
-  children,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+export function Card({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div className={cn('glass p-6', className)} {...props}>
       {children}
@@ -25,12 +21,11 @@ export function Badge({
 }: {
   className?: string
   children: React.ReactNode
-  tone?: 'neutral' | 'verdant' | 'gold' | 'flame'
+  tone?: 'neutral' | 'verdant' | 'flame'
 }) {
   const tones = {
     neutral: 'border-white/15 bg-white/[0.06] text-bone-muted',
     verdant: 'border-verdant/30 bg-verdant/10 text-verdant-soft',
-    gold: 'border-gold/30 bg-gold/10 text-gold-soft',
     flame: 'border-flame/30 bg-flame/10 text-flame-soft',
   }
 
@@ -75,7 +70,7 @@ export function SectionHeading({
   return (
     <div className={cn('space-y-4', centered && 'mx-auto max-w-2xl text-center', className)}>
       {eyebrow ? (
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">{eyebrow}</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-flame">{eyebrow}</p>
       ) : null}
       <h2 className="text-display-sm font-semibold text-balance text-bone">{title}</h2>
       {description ? (

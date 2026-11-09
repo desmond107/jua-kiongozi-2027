@@ -1,11 +1,7 @@
 'use client'
 
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import {
-  FLAG_COLOR_ORDER,
-  FLAG_META,
-  type CandidateAnalytics,
-} from '@/backend/validators'
+import { FLAG_COLOR_ORDER, FLAG_META, type CandidateAnalytics } from '@/backend/validators'
 import { AXIS, ChartLegend, ChartPanel, TooltipShell } from './chart-primitives'
 import { EmptyState } from '@/frontend/components/ui/primitives'
 
@@ -83,7 +79,7 @@ export function FlagDistributionChart({ candidates }: { candidates: CandidateAna
                   width={128}
                 />
                 <Tooltip
-                  cursor={{ fill: 'rgb(247 245 240 / 0.04)' }}
+                  cursor={{ fill: 'rgb(250 249 246 / 0.04)' }}
                   content={({ active, payload, label }) => {
                     if (!active || !payload?.length) return null
                     const row = payload[0]?.payload as Record<string, number> | undefined
@@ -111,7 +107,7 @@ export function FlagDistributionChart({ candidates }: { candidates: CandidateAna
                     dataKey={color}
                     stackId="flags"
                     fill={FLAG_META[color].hex}
-                    stroke="#131A29"
+                    stroke="#18181A"
                     strokeWidth={2}
                     radius={
                       index === FLAG_COLOR_ORDER.length - 1

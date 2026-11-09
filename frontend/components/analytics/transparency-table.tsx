@@ -77,7 +77,7 @@ export function TransparencyTable({ candidates }: { candidates: CandidateAnalyti
                 <th scope="row" className="px-5 py-3.5 text-left font-normal">
                   <Link
                     href={`/candidates/${candidate.slug}`}
-                    className="rounded font-medium text-bone hover:text-gold"
+                    className="rounded font-medium text-bone hover:text-flame"
                   >
                     {candidate.fullName}
                   </Link>

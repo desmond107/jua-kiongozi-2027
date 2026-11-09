@@ -56,7 +56,7 @@ export default function TermsPage() {
         <ol className="space-y-4">
           {TERMS.map((term, index) => (
             <li key={term.title} className="glass flex gap-5 p-6">
-              <span className="font-display text-lg font-semibold text-gold/50">
+              <span className="font-display text-lg font-semibold text-flame/50">
                 {String(index + 1).padStart(2, '0')}
               </span>
               <div className="space-y-2">
@@ -69,11 +69,11 @@ export default function TermsPage() {
 
         <p className="text-sm text-bone-dim">
           See also the{' '}
-          <Link href="/privacy-policy" className="text-gold underline-offset-4 hover:underline">
+          <Link href="/privacy-policy" className="text-flame underline-offset-4 hover:underline">
             privacy policy
           </Link>{' '}
           for how your data is handled, and{' '}
-          <Link href="/how-it-works" className="text-gold underline-offset-4 hover:underline">
+          <Link href="/how-it-works" className="text-flame underline-offset-4 hover:underline">
             how it works
           </Link>{' '}
           for the technical detail.

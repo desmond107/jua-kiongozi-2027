@@ -95,7 +95,7 @@ export function VoteWidget({
     return (
       <div className="glass space-y-4 p-6">
         <div className="flex items-center gap-2.5">
-          <Lock className="h-5 w-5 text-gold" aria-hidden />
+          <Lock className="h-5 w-5 text-flame" aria-hidden />
           <h2 className="font-display text-lg font-semibold text-bone">
             Sign in to rate this candidate
           </h2>
@@ -182,8 +182,7 @@ export function VoteWidget({
   }
 
   const ready = choice !== null && color !== null
-  const unchanged =
-    revising && choice === existing?.choice && color === existing?.color
+  const unchanged = revising && choice === existing?.choice && color === existing?.color
 
   async function submit() {
     if (!choice || !color) return
@@ -303,7 +302,7 @@ export function VoteWidget({
                 className={cn(
                   'rounded-2xl border p-3.5 text-left transition-all duration-200',
                   selected
-                    ? 'border-gold/50 bg-gold/[0.09] shadow-glow-gold'
+                    ? 'border-bone/50 bg-white/[0.08] shadow-glow'
                     : 'border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]',
                 )}
               >
@@ -372,7 +371,7 @@ export function VoteWidget({
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <div className="space-y-4 rounded-2xl border border-gold/30 bg-gold/[0.06] p-4">
+            <div className="space-y-4 rounded-2xl border border-flame/30 bg-flame/[0.06] p-4">
               <div className="space-y-2">
                 <p className="text-sm font-semibold text-bone">
                   {revising ? 'Confirm your change' : 'Confirm your submission'}

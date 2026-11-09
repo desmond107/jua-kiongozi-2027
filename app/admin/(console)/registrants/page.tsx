@@ -87,9 +87,9 @@ export default async function AdminRegistrantsPage({
       <p className="flex items-start gap-2.5 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-xs leading-relaxed text-bone-dim">
         <Lock className="mt-0.5 h-4 w-4 shrink-0 text-bone-muted" aria-hidden />
         <span>
-          Phone numbers and national ID numbers are stored as HMAC-SHA256 hashes. The masked
-          values below are the complete stored record — the full numbers cannot be recovered by
-          this console, by the export, or by anyone holding the database.{' '}
+          Phone numbers and national ID numbers are stored as HMAC-SHA256 hashes. The masked values
+          below are the complete stored record — the full numbers cannot be recovered by this
+          console, by the export, or by anyone holding the database.{' '}
           <strong className="font-semibold text-bone-muted">
             Individual voting choices are not shown anywhere in this console.
           </strong>{' '}
@@ -107,11 +107,21 @@ export default async function AdminRegistrantsPage({
             </caption>
             <thead>
               <tr className="border-b border-white/10 text-left">
-                <th scope="col" className="px-5 py-3 font-medium text-bone-muted">Name</th>
-                <th scope="col" className="px-3 py-3 font-medium text-bone-muted">County</th>
-                <th scope="col" className="px-3 py-3 font-medium text-bone-muted">Phone</th>
-                <th scope="col" className="px-3 py-3 font-medium text-bone-muted">ID</th>
-                <th scope="col" className="px-3 py-3 font-medium text-bone-muted">Registered</th>
+                <th scope="col" className="px-5 py-3 font-medium text-bone-muted">
+                  Name
+                </th>
+                <th scope="col" className="px-3 py-3 font-medium text-bone-muted">
+                  County
+                </th>
+                <th scope="col" className="px-3 py-3 font-medium text-bone-muted">
+                  Phone
+                </th>
+                <th scope="col" className="px-3 py-3 font-medium text-bone-muted">
+                  ID
+                </th>
+                <th scope="col" className="px-3 py-3 font-medium text-bone-muted">
+                  Registered
+                </th>
                 <th scope="col" className="px-3 py-3 text-right font-medium text-bone-muted">
                   Voted
                 </th>
@@ -130,9 +140,7 @@ export default async function AdminRegistrantsPage({
                     {row.name}
                   </th>
                   <td className="px-3 py-3 text-bone-muted">{row.county ?? 'Not stated'}</td>
-                  <td className="px-3 py-3 font-mono text-xs text-bone-muted">
-                    {row.phoneMasked}
-                  </td>
+                  <td className="px-3 py-3 font-mono text-xs text-bone-muted">{row.phoneMasked}</td>
                   <td className="px-3 py-3 font-mono text-xs text-bone-muted">{row.idMasked}</td>
                   <td className="px-3 py-3 text-xs text-bone-dim">
                     {formatDate(row.registeredAt)}
@@ -163,7 +171,7 @@ export default async function AdminRegistrantsPage({
           className="flex items-center justify-between gap-3 text-sm"
         >
           {page > 1 ? (
-            <Link href={pageHref(page - 1)} className="text-gold hover:underline">
+            <Link href={pageHref(page - 1)} className="text-flame hover:underline">
               ← Previous
             </Link>
           ) : (
@@ -175,7 +183,7 @@ export default async function AdminRegistrantsPage({
           </span>
 
           {page < pageCount ? (
-            <Link href={pageHref(page + 1)} className="text-gold hover:underline">
+            <Link href={pageHref(page + 1)} className="text-flame hover:underline">
               Next →
             </Link>
           ) : (

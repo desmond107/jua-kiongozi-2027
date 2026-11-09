@@ -64,12 +64,10 @@ export const votingTokenSchema = z
  * and given its own message.
  */
 export const countySchema = z.enum(KENYAN_COUNTIES, {
-  errorMap: (issue, ctx) => {
-    if (issue.code === 'invalid_type' || ctx.data === '' || ctx.data == null) {
-      return { message: 'Select your county' }
-    }
-    return { message: 'Select a county from the list' }
-  },
+  error: (issue) =>
+    issue.input === '' || issue.input == null
+      ? 'Select your county'
+      : 'Select a county from the list',
 })
 
 /** The six-digit code sent by SMS. Spaces and hyphens are forgiven. */
@@ -98,12 +96,10 @@ export const registerSchema = z.object({
   // only the subset who volunteered one.
   county: countySchema,
   acceptedTerms: z.literal(true, {
-    errorMap: () => ({ message: 'You must accept the terms to register' }),
+    error: 'You must accept the terms to register',
   }),
   acknowledgedNotIebc: z.literal(true, {
-    errorMap: () => ({
-      message: 'Please confirm you understand this is not an official IEBC platform',
-    }),
+    error: 'Please confirm you understand this is not an official IEBC platform',
   }),
 })
 
@@ -177,7 +173,7 @@ export const deleteAccountSchema = z.object({
   phoneNumber: phoneNumberSchema,
   otpCode: otpCodeSchema,
   confirmation: z.literal(DELETE_CONFIRMATION, {
-    errorMap: () => ({ message: `Type ${DELETE_CONFIRMATION} to confirm.` }),
+    error: `Type ${DELETE_CONFIRMATION} to confirm.`,
   }),
 })
 

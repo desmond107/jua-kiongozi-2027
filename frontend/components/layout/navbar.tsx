@@ -28,8 +28,14 @@ export function Navbar({ signedIn }: { signedIn: boolean }) {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Close the mobile menu on navigation, otherwise it stays open over the new page.
-  useEffect(() => setMenuOpen(false), [pathname])
+  // Close the mobile menu on navigation, otherwise it stays open over the new
+  // page. Adjusted during render rather than in an effect, so the stale open
+  // menu never paints for a frame on the new route.
+  const [menuPathname, setMenuPathname] = useState(pathname)
+  if (menuPathname !== pathname) {
+    setMenuPathname(pathname)
+    setMenuOpen(false)
+  }
 
   return (
     <header
@@ -40,6 +46,8 @@ export function Navbar({ signedIn }: { signedIn: boolean }) {
           : 'border-b border-transparent',
       )}
     >
+      {/* The flag, as a hairline across the top of every page. */}
+      <div className="h-[3px] w-full bg-flag-stripe" aria-hidden />
       <nav className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-4 sm:px-8">
         <Link
           href="/"
@@ -48,7 +56,7 @@ export function Navbar({ signedIn }: { signedIn: boolean }) {
         >
           <Emblem className="h-9 w-9" />
           <span className="font-display text-lg font-semibold tracking-tight text-bone">
-            Jua Kiongozi <span className="text-gold">2027</span>
+            Jua Kiongozi <span className="text-flame">2027</span>
           </span>
         </Link>
 

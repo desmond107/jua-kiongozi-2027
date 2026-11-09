@@ -56,7 +56,7 @@ export function CandidatePortrait({
         className="absolute inset-0 opacity-40"
         style={{
           backgroundImage:
-            'radial-gradient(60% 60% at 30% 25%, rgb(30 184 84 / 0.28) 0%, transparent 70%), radial-gradient(50% 50% at 75% 80%, rgb(245 185 66 / 0.22) 0%, transparent 70%)',
+            'radial-gradient(60% 60% at 30% 25%, rgb(0 107 63 / 0.40) 0%, transparent 70%), radial-gradient(50% 50% at 75% 80%, rgb(187 0 0 / 0.26) 0%, transparent 70%)',
         }}
         aria-hidden
       />

@@ -36,7 +36,7 @@ export function useTilt({ max = 8, glare = true }: TiltOptions = {}) {
   // from a fixed source rather than carrying its own lamp.
   const glareX = useTransform(px, [-0.5, 0.5], ['80%', '20%'])
   const glareY = useTransform(py, [-0.5, 0.5], ['80%', '20%'])
-  const glareBackground = useMotionTemplate`radial-gradient(60% 60% at ${glareX} ${glareY}, rgb(247 245 240 / 0.16) 0%, transparent 70%)`
+  const glareBackground = useMotionTemplate`radial-gradient(60% 60% at ${glareX} ${glareY}, rgb(250 249 246 / 0.16) 0%, transparent 70%)`
 
   const onPointerMove = useCallback(
     (event: React.PointerEvent<HTMLElement>) => {
